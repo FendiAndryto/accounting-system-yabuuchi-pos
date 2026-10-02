@@ -79,7 +79,12 @@ export function FloatingAiAssistant({ onDataChanged }) {
       setMessages((prev) => [...prev, aiMsg]);
 
       // If tools mutated data or performed actions, notify parent to refresh
-      if (res.executed_tools?.length > 0 && onDataChanged) {
+      const hasMutatingTool = res.executed_tools?.some((t) => {
+        const name = typeof t === 'string' ? t : (t?.tool || t?.name);
+        return name === 'create_transaction' || name === 'update_transaction' || name === 'delete_transaction';
+      });
+
+      if (hasMutatingTool && onDataChanged) {
         onDataChanged();
       }
     } catch (e) {
@@ -248,11 +253,17 @@ export function FloatingAiAssistant({ onDataChanged }) {
                     {/* Tool executions */}
                     {m.tools && m.tools.length > 0 && (
                       <View style={styles.toolList}>
-                        {m.tools.map((t, idx) => (
-                          <View key={idx} style={styles.toolBadge}>
-                            <Text style={styles.toolBadgeText}>⚡ Tool: {t.name || t}</Text>
-                          </View>
-                        ))}
+                        {m.tools.map((t, idx) => {
+                          const toolLabel =
+                            typeof t === 'string'
+                              ? t
+                              : (t?.tool || t?.name || 'Sistem');
+                          return (
+                            <View key={idx} style={styles.toolBadge}>
+                              <Text style={styles.toolBadgeText}>⚡ Tool: {String(toolLabel)}</Text>
+                            </View>
+                          );
+                        })}
                       </View>
                     )}
 
@@ -268,13 +279,15 @@ export function FloatingAiAssistant({ onDataChanged }) {
                           />
                         </View>
                         <Text style={styles.draftAmount}>
-                          Rp {Number(m.draftCard.amount || 0).toLocaleString('id-ID')}
+                          {m.draftCard.amount_formatted || `Rp ${Number(m.draftCard.amount || 0).toLocaleString('id-ID')}`}
                         </Text>
                         <Text style={styles.draftDesc}>
-                          {m.draftCard.description || 'Tanpa keterangan'}
+                          {String(m.draftCard.description || 'Tanpa keterangan')}
                         </Text>
                         <Text style={styles.draftMeta}>
-                          Metode: {m.draftCard.payment_method || 'Transfer Bank'}
+                          {m.draftCard.account_name ? `Rekening: ${m.draftCard.account_name} • ` : ''}
+                          {m.draftCard.category_name ? `Kategori: ${m.draftCard.category_name} • ` : ''}
+                          Metode: {String(m.draftCard.payment_method || 'Transfer Bank')}
                         </Text>
 
                         {!m.draftSaved && !m.draftCancelled && (

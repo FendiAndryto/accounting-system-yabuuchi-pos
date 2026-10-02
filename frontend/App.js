@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
 } from 'react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { colors } from './src/theme';
@@ -161,11 +162,48 @@ function MainAppLayout() {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Unhandled UI Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorBoundaryContainer}>
+          <Text style={styles.errorBoundaryTitle}>⚠️ Terjadi Kendala Tampilan</Text>
+          <Text style={styles.errorBoundaryText}>
+            {this.state.error?.message || 'Aplikasi mengalami kesalahan tak terduga.'}
+          </Text>
+          <TouchableOpacity
+            style={styles.errorBoundaryBtn}
+            onPress={() => this.setState({ hasError: false, error: null })}
+          >
+            <Text style={styles.errorBoundaryBtnText}>Muat Ulang Halaman</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <AuthProvider>
-      <MainAppLayout />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <MainAppLayout />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -217,5 +255,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     fontWeight: '500',
+  },
+  errorBoundaryContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  errorBoundaryTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#ef4444',
+    marginBottom: 8,
+  },
+  errorBoundaryText: {
+    fontSize: 14,
+    color: '#475569',
+    textAlign: 'center',
+    marginBottom: 20,
+    maxWidth: 500,
+  },
+  errorBoundaryBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  errorBoundaryBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

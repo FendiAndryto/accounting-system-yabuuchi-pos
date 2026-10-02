@@ -18,6 +18,7 @@ class GeminiAgentService
         $configured = env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
         $this->candidateModels = array_values(array_unique(array_filter([
             $configured,
+            'gemini-2.5-flash',
             'gemini-3.5-flash-lite',
             'gemini-3.8-flash',
         ])));
@@ -93,6 +94,7 @@ class GeminiAgentService
                         // Execute the tool locally in Laravel
                         $toolResult = AiToolRegistry::executeTool($functionName, $functionArgs);
                         $executedTools[] = [
+                            'name' => $functionName,
                             'tool' => $functionName,
                             'args' => $functionArgs,
                             'result' => $toolResult,
@@ -161,7 +163,7 @@ class GeminiAgentService
     /**
      * Send generateContent request with multi-model failover
      */
-    private function postGenerateContent(array $payload, int $timeout = 20): ?array
+    private function postGenerateContent(array $payload, int $timeout = 12): ?array
     {
         foreach ($this->candidateModels as $model) {
             try {
@@ -203,7 +205,7 @@ class GeminiAgentService
             }
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'expense_summary', 'result' => $expense]],
+                'executed_tools' => [['name' => 'expense_summary', 'tool' => 'expense_summary', 'result' => $expense]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
@@ -222,7 +224,7 @@ class GeminiAgentService
             }
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'income_summary', 'result' => $income]],
+                'executed_tools' => [['name' => 'income_summary', 'tool' => 'income_summary', 'result' => $income]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
@@ -245,7 +247,7 @@ class GeminiAgentService
             return [
                 'reply' => "Saya telah menyiapkan draft transaksi untuk Anda. Silakan periksa kembali rinciannya di bawah ini sebelum disimpan ke sistem:",
                 'executed_tools' => [
-                    ['tool' => 'create_draft', 'result' => $draftResult],
+                    ['name' => 'create_draft', 'tool' => 'create_draft', 'result' => $draftResult],
                 ],
                 'draft_card' => $draftResult['draft'] ?? null,
                 'provider' => 'local-engine',
@@ -262,7 +264,7 @@ class GeminiAgentService
             }
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'balance_summary', 'result' => $balance]],
+                'executed_tools' => [['name' => 'balance_summary', 'tool' => 'balance_summary', 'result' => $balance]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
@@ -277,7 +279,7 @@ class GeminiAgentService
             $msg .= "• Net Cash Flow: **{$cf['net_cash_flow_formatted']}** ({$cf['status']})";
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'cash_flow', 'result' => $cf]],
+                'executed_tools' => [['name' => 'cash_flow', 'tool' => 'cash_flow', 'result' => $cf]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
@@ -293,7 +295,7 @@ class GeminiAgentService
             $msg .= "• Status Kesehatan Finansial: **{$trend['health_score']}**";
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'trend_analysis', 'result' => $trend]],
+                'executed_tools' => [['name' => 'trend_analysis', 'tool' => 'trend_analysis', 'result' => $trend]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
@@ -309,7 +311,7 @@ class GeminiAgentService
             $msg .= "💡 Rekomendasi: " . implode(', ', $forecast['recommended_actions']);
             return [
                 'reply' => $msg,
-                'executed_tools' => [['tool' => 'forecasting', 'result' => $forecast]],
+                'executed_tools' => [['name' => 'forecasting', 'tool' => 'forecasting', 'result' => $forecast]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
