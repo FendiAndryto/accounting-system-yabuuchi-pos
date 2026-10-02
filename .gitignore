@@ -1,0 +1,62 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+vendor/
+backend/vendor/
+
+# Expo & Mobile
+frontend/.expo/
+frontend/dist/
+frontend/web-build/
+frontend/.kotlin/
+frontend/ios/
+frontend/android/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Backend / Laravel specific
+backend/storage/*.key
+backend/storage/pail
+backend/public/storage
+backend/public/build
+backend/public/hot
+backend/.phpunit.result.cache
+backend/.phpunit.cache
+backend/_ide_helper.php
+backend/Homestead.json
+backend/Homestead.yaml
+backend/auth.json
+*.sqlite
+*.sqlite-journal
+backend/database/*.sqlite
+backend/database/*.sqlite-journal
+
+# Logs & Debug
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# IDEs & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.zed/
+.cursor/

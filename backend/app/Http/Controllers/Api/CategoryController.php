@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Category\StoreCategoryRequest;
+use App\Http\Requests\Category\UpdateCategoryRequest;
+use App\Models\Category;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class CategoryController extends Controller
+{
+    /**
+     * Display a listing of categories.
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $query = Category::query();
+
+        // If 'all' is not true, only return active categories (for transaction entry forms)
+        if (!$request->boolean('all')) {
+            $query->where('is_active', true);
+        }
+
+        if ($request->filled('type') && in_array($request->type, ['cash_in', 'cash_out'])) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->input('status');
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        $categories = $query->withCount('transactions')
+                            ->orderBy('type', 'asc')
+                            ->orderBy('name', 'asc')
+                            ->get()
+                            ->map(function ($cat) {
+                                return [
+                                    'id' => $cat->id,
+                                    'name' => $cat->name,
+                                    'type' => $cat->type,
+                                    'description' => $cat->description,
+                                    'is_active' => (bool) $cat->is_active,
+                                    'transactions_count' => $cat->transactions_count,
+                                    'created_at' => $cat->created_at?->format('Y-m-d H:i:s'),
+                                ];
+                            });
+
+        return response()->json([
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Store a newly created category.
+     */
+    public function store(StoreCategoryRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $category = Category::create([
+            'name' => $validated['name'],
+            'type' => $validated['type'],
+            'description' => $validated['description'] ?? null,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'Kategori berhasil ditambahkan',
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'type' => $category->type,
+                'description' => $category->description,
+                'is_active' => (bool) $category->is_active,
+                'transactions_count' => 0,
+            ],
+        ], 201);
+    }
+
+    /**
+     * Update the specified category.
+     */
+    public function update(UpdateCategoryRequest $request, int $id): JsonResponse
+    {
+        $category = Category::withCount('transactions')->findOrFail($id);
+
+        $validated = $request->validated();
+
+        // Accounting Integrity Check:
+        // Category type (Cash In vs Cash Out) cannot be altered once transactions exist.
+        if ($category->transactions_count > 0 && $validated['type'] !== $category->type) {
+            $currentType = $category->type === 'cash_in' ? 'Pemasukan (Cash In)' : 'Pengeluaran (Cash Out)';
+            return response()->json([
+                'message' => "Tipe kategori '{$category->name}' tidak dapat diubah dari {$currentType} karena sudah digunakan dalam {$category->transactions_count} transaksi. Mengubah tipe kategori akan merusak pembukuan arus kas.",
+            ], 422);
+        }
+
+        $category->name = $validated['name'];
+        $category->type = $validated['type'];
+        $category->description = $validated['description'] ?? null;
+        $category->save();
+
+        return response()->json([
+            'message' => 'Kategori berhasil diperbarui',
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'type' => $category->type,
+                'description' => $category->description,
+                'is_active' => (bool) $category->is_active,
+                'transactions_count' => $category->transactions_count,
+            ],
+        ]);
+    }
+
+    /**
+     * Toggle active/inactive status of a category.
+     */
+    public function toggleStatus(Request $request, int $id): JsonResponse
+    {
+        $category = Category::withCount('transactions')->findOrFail($id);
+        $category->is_active = !$category->is_active;
+        $category->save();
+
+        $statusText = $category->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'message' => "Kategori '{$category->name}' berhasil {$statusText}.",
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'type' => $category->type,
+                'is_active' => (bool) $category->is_active,
+                'transactions_count' => $category->transactions_count,
+            ],
+        ]);
+    }
+
+    /**
+     * Remove the specified category if it has no transactions.
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $category = Category::withCount('transactions')->findOrFail($id);
+
+        if ($category->transactions_count > 0) {
+            return response()->json([
+                'message' => "Kategori '{$category->name}' tidak dapat dihapus karena sudah digunakan dalam {$category->transactions_count} transaksi. Silakan gunakan fitur Nonaktifkan Kategori untuk mengarsipkan tanpa merusak data historis.",
+            ], 422);
+        }
+
+        $category->delete();
+
+        return response()->json([
+            'message' => "Kategori '{$category->name}' berhasil dihapus permanen.",
+        ]);
+    }
+}
