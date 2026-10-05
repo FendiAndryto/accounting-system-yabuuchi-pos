@@ -1,5 +1,6 @@
-export const API_AUTH = 'http://127.0.0.1:8000/api/auth';
-export const API_BASE = 'http://127.0.0.1:8000/api/v1';
+const API_HOST = process.env.EXPO_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+export const API_AUTH = `${API_HOST}/api/auth`;
+export const API_BASE = `${API_HOST}/api/v1`;
 
 export const STORAGE_TOKEN_KEY = 'aube_accounting_token';
 export const STORAGE_USER_KEY = 'aube_accounting_user';
