@@ -12,6 +12,8 @@ class Category extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_ja',
         'type', // 'cash_in', 'cash_out'
         'description',
         'is_active',

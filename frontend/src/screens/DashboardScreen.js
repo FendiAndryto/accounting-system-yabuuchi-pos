@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
@@ -17,7 +18,8 @@ import { Badge } from '../components/common/Badge';
 
 export function DashboardScreen({ onNavigate }) {
   const { colors } = useTheme();
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, formatCurrency, formatDate, getLocalizedName } = useLanguage();
+  const { isMobile } = useResponsive();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -66,11 +68,19 @@ export function DashboardScreen({ onNavigate }) {
   const netFlow = cashFlow.net_cash_flow !== undefined ? Number(cashFlow.net_cash_flow) : (totalIn - totalOut);
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[
+        styles.container,
+        isMobile && styles.containerMobile,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={{ paddingBottom: 90 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* KPI Cards Row */}
       <View style={styles.kpiGrid}>
         {/* Cash In Card */}
-        <View style={[styles.kpiCard, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
+        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
           <View style={styles.kpiTopRow}>
             <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_in')}</Text>
             <View style={[styles.kpiIconBox, { backgroundColor: colors.cashInBg }]}>
@@ -84,7 +94,7 @@ export function DashboardScreen({ onNavigate }) {
         </View>
 
         {/* Cash Out Card */}
-        <View style={[styles.kpiCard, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
+        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
           <View style={styles.kpiTopRow}>
             <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_out')}</Text>
             <View style={[styles.kpiIconBox, { backgroundColor: colors.cashOutBg }]}>
@@ -98,7 +108,7 @@ export function DashboardScreen({ onNavigate }) {
         </View>
 
         {/* Net Flow Card */}
-        <View style={[styles.kpiCard, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
+        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
           <View style={styles.kpiTopRow}>
             <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.net_flow')}</Text>
             <Badge
@@ -129,16 +139,16 @@ export function DashboardScreen({ onNavigate }) {
       >
         <View style={styles.accountsGrid}>
           {accounts.map((acc) => (
-            <View key={acc.id} style={[styles.accountCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
+            <View key={acc.id} style={[styles.accountCard, isMobile && styles.accountCardMobile, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
               <View style={styles.accHeader}>
                 <View style={[styles.accIconBox, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
                   <Feather name="credit-card" size={16} color={colors.primary} />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={[styles.accName, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {acc.name}
+                    {getLocalizedName(acc)}
                   </Text>
-                  <Text style={[styles.accNumber, { color: colors.textMuted }]}>
+                  <Text style={[styles.accNumber, { color: colors.textMuted }]} numberOfLines={1}>
                     {acc.account_number || 'Operasional / Cash'}
                   </Text>
                 </View>
@@ -166,7 +176,7 @@ export function DashboardScreen({ onNavigate }) {
         </View>
       </Card>
 
-      {/* Recent Transactions Activity */}
+      {/* Recent Transactions List */}
       <Card
         title={t('dashboard.recent_transactions')}
         subtitle={t('screen.history.subtitle')}
@@ -201,35 +211,43 @@ export function DashboardScreen({ onNavigate }) {
                   />
                 </View>
 
-                <View style={styles.txDetails}>
-                  <Text style={[styles.txDesc, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {tx.description || (isIn ? t('nav.cash_in') : t('nav.cash_out'))}
-                  </Text>
-                  <View style={styles.txMetaRow}>
-                    <Badge
-                      label={tx.category?.name || t('common.all')}
-                      variant={isIn ? 'cash_in' : 'cash_out'}
-                      size="sm"
-                    />
-                    <Text style={[styles.txMetaDot, { color: colors.textLight }]}>•</Text>
-                    <Text style={[styles.txMetaText, { color: colors.textMuted }]}>{tx.account?.name || 'Kas'}</Text>
-                    <Text style={[styles.txMetaDot, { color: colors.textLight }]}>•</Text>
-                    <Text style={[styles.txMetaText, { color: colors.textMuted }]}>
-                      {formatDate(tx.date, { day: 'numeric', month: 'short', year: 'numeric' })}
+                <View style={styles.txMainCol}>
+                  {/* Top Row: Description & Amount */}
+                  <View style={styles.txTopRow}>
+                    <Text style={[styles.txDesc, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {tx.description || (isIn ? t('nav.cash_in') : t('nav.cash_out'))}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.txAmount,
+                        { color: isIn ? colors.cashIn : colors.cashOut },
+                      ]}
+                    >
+                      {isIn ? '+' : '-'}{formatCurrency(tx.amount)}
                     </Text>
                   </View>
-                </View>
 
-                <View style={styles.txAmountContainer}>
-                  <Text
-                    style={[
-                      styles.txAmount,
-                      { color: isIn ? colors.cashIn : colors.cashOut },
-                    ]}
-                  >
-                    {isIn ? '+' : '-'}{formatCurrency(tx.amount)}
-                  </Text>
-                  <Text style={[styles.txMethod, { color: colors.textMuted }]}>{tx.payment_method}</Text>
+                  {/* Bottom Row: Category Badge, Account, Date, and Payment Method */}
+                  <View style={styles.txBottomRow}>
+                    <View style={styles.txMetaGroup}>
+                      <Badge
+                        label={getLocalizedName(tx.category) || t('common.all')}
+                        variant={isIn ? 'cash_in' : 'cash_out'}
+                        size="sm"
+                      />
+                      <Text style={[styles.txMetaText, { color: colors.textMuted }]} numberOfLines={1}>
+                        {getLocalizedName(tx.account) || 'Kas'} • {formatDate(tx.date, { day: 'numeric', month: 'short' })}
+                      </Text>
+                    </View>
+                    <Text style={[styles.txMethod, { color: colors.textMuted }]} numberOfLines={1}>
+                      {tx.payment_method === 'Transfer Bank' ? t('payment.transfer_bank') :
+                       tx.payment_method === 'Tunai' ? t('payment.cash') :
+                       tx.payment_method === 'QRIS' ? t('payment.qris') :
+                       tx.payment_method === 'Kartu Debit' ? t('payment.debit') :
+                       tx.payment_method === 'Giro' ? t('payment.giro') :
+                       tx.payment_method === 'Lainnya' ? t('payment.other') : tx.payment_method}
+                    </Text>
+                  </View>
                 </View>
               </View>
             );
@@ -244,6 +262,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 28,
+  },
+  containerMobile: {
+    padding: 14,
   },
   centerContainer: {
     flex: 1,
@@ -268,6 +289,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 20,
     ...theme.shadows.sm,
+  },
+  kpiCardMobile: {
+    minWidth: '100%',
+    padding: 16,
   },
   kpiCardIn: {
     borderLeftWidth: 4,
@@ -323,6 +348,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: theme.borderRadius.md,
     padding: 16,
+  },
+  accountCardMobile: {
+    minWidth: '100%',
   },
   accHeader: {
     flexDirection: 'row',
@@ -391,37 +419,52 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
+    flexShrink: 0,
   },
-  txDetails: {
+  txMainCol: {
     flex: 1,
+    minWidth: 0,
+  },
+  txTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   txDesc: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 4,
-  },
-  txMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  txMetaDot: {
-    marginHorizontal: 6,
-    fontSize: 10,
-  },
-  txMetaText: {
-    fontSize: 12,
-  },
-  txAmountContainer: {
-    alignItems: 'flex-end',
-    marginLeft: 12,
+    flex: 1,
+    minWidth: 0,
   },
   txAmount: {
     fontSize: 14,
     fontWeight: '700',
+    flexShrink: 0,
+    textAlign: 'right',
+  },
+  txBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    gap: 6,
+  },
+  txMetaGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    minWidth: 0,
+  },
+  txMetaText: {
+    fontSize: 12,
+    flex: 1,
+    minWidth: 0,
   },
   txMethod: {
     fontSize: 11,
-    marginTop: 2,
+    flexShrink: 0,
   },
 });

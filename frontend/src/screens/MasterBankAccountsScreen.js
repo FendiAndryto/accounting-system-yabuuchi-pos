@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
@@ -20,7 +21,8 @@ import { FormInput } from '../components/common/FormInput';
 
 export function MasterBankAccountsScreen() {
   const { colors } = useTheme();
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, getLocalizedName } = useLanguage();
+  const { isMobile } = useResponsive();
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [search, setSearch] = useState('');
@@ -33,6 +35,8 @@ export function MasterBankAccountsScreen() {
 
   // Form State
   const [formName, setFormName] = useState('');
+  const [formNameEn, setFormNameEn] = useState('');
+  const [formNameJa, setFormNameJa] = useState('');
   const [formAccountNumber, setFormAccountNumber] = useState('');
   const [formInitialBalance, setFormInitialBalance] = useState('');
   const [formDesc, setFormDesc] = useState('');
@@ -56,6 +60,8 @@ export function MasterBankAccountsScreen() {
 
   const handleOpenAdd = () => {
     setFormName('');
+    setFormNameEn('');
+    setFormNameJa('');
     setFormAccountNumber('');
     setFormInitialBalance('');
     setFormDesc('');
@@ -66,6 +72,8 @@ export function MasterBankAccountsScreen() {
   const handleOpenEdit = (acc) => {
     setSelectedAccount(acc);
     setFormName(acc.name);
+    setFormNameEn(acc.name_en || '');
+    setFormNameJa(acc.name_ja || '');
     setFormAccountNumber(acc.account_number || '');
     setFormInitialBalance(String(acc.initial_balance || 0));
     setFormDesc(acc.description || '');
@@ -83,6 +91,8 @@ export function MasterBankAccountsScreen() {
       setSubmitting(true);
       await accountingService.createAccount({
         name: formName.trim(),
+        name_en: formNameEn.trim() || null,
+        name_ja: formNameJa.trim() || null,
         account_number: formAccountNumber.trim() || null,
         initial_balance: parseFloat(formInitialBalance) || 0,
         description: formDesc.trim() || null,
@@ -107,6 +117,8 @@ export function MasterBankAccountsScreen() {
       setSubmitting(true);
       await accountingService.updateAccount(selectedAccount.id, {
         name: formName.trim(),
+        name_en: formNameEn.trim() || null,
+        name_ja: formNameJa.trim() || null,
         account_number: formAccountNumber.trim() || null,
         initial_balance: parseFloat(formInitialBalance) || 0,
         description: formDesc.trim() || null,
@@ -146,7 +158,15 @@ export function MasterBankAccountsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[
+        styles.container,
+        isMobile && styles.containerMobile,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={{ paddingBottom: 80 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Top Action Bar */}
       <View style={styles.actionBar}>
         <View style={styles.searchBox}>
@@ -181,85 +201,96 @@ export function MasterBankAccountsScreen() {
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
-          <View style={styles.table}>
-            {/* Table Header */}
-            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('master.bank_name')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.account_no')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('master.init_balance')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('dashboard.total_balance')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
-            </View>
-
-            {/* Table Rows */}
-            {accounts.map((acc) => (
-              <View key={acc.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
-                <View style={[styles.td, { flex: 2 }]}>
-                  <Text style={[styles.accName, { color: colors.textPrimary }]}>{acc.name}</Text>
-                  {acc.description ? (
-                    <Text style={[styles.accDesc, { color: colors.textMuted }]} numberOfLines={1}>
-                      {acc.description}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={[styles.td, { flex: 1.5 }]}>
-                  <Text style={[styles.accNumber, { color: colors.textSecondary }]}>{acc.account_number || '-'}</Text>
-                  <Text style={[styles.txCount, { color: colors.textLight }]}>{acc.transactions_count} {t('nav.transactions').toLowerCase()}</Text>
-                </View>
-
-                <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
-                  <Text style={[styles.balanceText, { color: colors.textPrimary }]}>
-                    {formatCurrency(acc.initial_balance || 0)}
-                  </Text>
-                </View>
-
-                <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
-                  <Text style={[styles.balanceText, { fontWeight: '700', color: colors.primary }]}>
-                    {formatCurrency(acc.current_balance || 0)}
-                  </Text>
-                </View>
-
-                <View style={[styles.td, { flex: 1, alignItems: 'center' }]}>
-                  <Badge
-                    label={acc.is_active ? t('common.active') : t('common.inactive')}
-                    variant={acc.is_active ? 'success' : 'neutral'}
-                    size="sm"
-                  />
-                </View>
-
-                <View style={[styles.td, { flex: 1.5, flexDirection: 'row', justifyContent: 'center', gap: 6 }]}>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                    onPress={() => handleOpenEdit(acc)}
-                    title={t('action.edit')}
-                  >
-                    <Feather name="edit-2" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
-                    <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('action.edit')}</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { borderColor: acc.is_active ? colors.warningBorder : colors.cashInBorder }]}
-                    onPress={() => handleToggleStatus(acc)}
-                  >
-                    <Text style={{ fontSize: 11, color: acc.is_active ? colors.warning : colors.cashIn, fontWeight: '600' }}>
-                      {acc.is_active ? 'Off' : 'On'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {acc.transactions_count === 0 && (
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { borderColor: colors.cashOutBorder }]}
-                      onPress={() => handleDelete(acc)}
-                    >
-                      <Feather name="trash-2" size={12} color={colors.cashOut} />
-                    </TouchableOpacity>
-                  )}
-                </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
+          >
+            <View style={[styles.table, { minWidth: 840 }]}>
+              {/* Table Header */}
+              <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 2.2 }]}>{t('master.bank_name')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.account_no')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('master.init_balance')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('dashboard.total_balance')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
               </View>
-            ))}
-          </View>
+
+              {/* Table Rows */}
+              {accounts.map((acc) => (
+                <View key={acc.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
+                  <View style={[styles.td, { flex: 2.2 }]}>
+                    <Text style={[styles.accName, { color: colors.textPrimary }]}>{getLocalizedName(acc)}</Text>
+                    {(acc.name_en || acc.name_ja) && (
+                      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 2 }}>
+                        {[acc.name_en && `EN: ${acc.name_en}`, acc.name_ja && `JA: ${acc.name_ja}`].filter(Boolean).join(' • ')}
+                      </Text>
+                    )}
+                    {acc.description ? (
+                      <Text style={[styles.accDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                        {acc.description}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <View style={[styles.td, { flex: 1.5 }]}>
+                    <Text style={[styles.accNumber, { color: colors.textSecondary }]}>{acc.account_number || '-'}</Text>
+                    <Text style={[styles.txCount, { color: colors.textLight }]}>{acc.transactions_count} {t('nav.transactions').toLowerCase()}</Text>
+                  </View>
+
+                  <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
+                    <Text style={[styles.balanceText, { color: colors.textPrimary }]}>
+                      {formatCurrency(acc.initial_balance || 0)}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
+                    <Text style={[styles.balanceText, { fontWeight: '700', color: colors.primary }]}>
+                      {formatCurrency(acc.current_balance || 0)}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.td, { flex: 1, alignItems: 'center' }]}>
+                    <Badge
+                      label={acc.is_active ? t('common.active') : t('common.inactive')}
+                      variant={acc.is_active ? 'success' : 'neutral'}
+                      size="sm"
+                    />
+                  </View>
+
+                  <View style={[styles.td, { flex: 1.5, flexDirection: 'row', justifyContent: 'center', gap: 6 }]}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                      onPress={() => handleOpenEdit(acc)}
+                      title={t('action.edit')}
+                    >
+                      <Feather name="edit-2" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('action.edit')}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { borderColor: acc.is_active ? colors.warningBorder : colors.cashInBorder }]}
+                      onPress={() => handleToggleStatus(acc)}
+                    >
+                      <Text style={{ fontSize: 11, color: acc.is_active ? colors.warning : colors.cashIn, fontWeight: '600' }}>
+                        {acc.is_active ? 'Off' : 'On'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    {acc.transactions_count === 0 && (
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { borderColor: colors.cashOutBorder }]}
+                        onPress={() => handleDelete(acc)}
+                      >
+                        <Feather name="trash-2" size={12} color={colors.cashOut} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         )}
       </Card>
 
@@ -292,6 +323,20 @@ export function MasterBankAccountsScreen() {
           value={formName}
           onChangeText={setFormName}
           placeholder="e.g. BCA Operasional, Kas Kecil"
+        />
+
+        <FormInput
+          label={t('master.name_en')}
+          value={formNameEn}
+          onChangeText={setFormNameEn}
+          placeholder="e.g. BCA Operational, Petty Cash"
+        />
+
+        <FormInput
+          label={t('master.name_ja')}
+          value={formNameJa}
+          onChangeText={setFormNameJa}
+          placeholder="e.g. BCA運営口座, 小口現金"
         />
 
         <FormInput
@@ -351,6 +396,18 @@ export function MasterBankAccountsScreen() {
         />
 
         <FormInput
+          label={t('master.name_en')}
+          value={formNameEn}
+          onChangeText={setFormNameEn}
+        />
+
+        <FormInput
+          label={t('master.name_ja')}
+          value={formNameJa}
+          onChangeText={setFormNameJa}
+        />
+
+        <FormInput
           label={t('master.account_no')}
           value={formAccountNumber}
           onChangeText={setFormAccountNumber}
@@ -380,15 +437,20 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 28,
   },
+  containerMobile: {
+    padding: 14,
+  },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    gap: 16,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   searchBox: {
-    width: 320,
+    flex: 1,
+    minWidth: 220,
   },
   centerContainer: {
     padding: 40,
@@ -411,7 +473,7 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
@@ -419,16 +481,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.3,
+    paddingHorizontal: 8,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
   },
   td: {
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   accName: {
     fontSize: 14,

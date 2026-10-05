@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { userService } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +24,7 @@ export function TeamScreen() {
   const { user: currentUser } = useAuth();
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { isMobile } = useResponsive();
 
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -165,7 +167,15 @@ export function TeamScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[
+        styles.container,
+        isMobile && styles.containerMobile,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={{ paddingBottom: 80 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Action and Filter Bar */}
       <View style={styles.actionBar}>
         <View style={styles.filterSection}>
@@ -231,22 +241,27 @@ export function TeamScreen() {
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
-          <View style={styles.table}>
-            {/* Header */}
-            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('common.user')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.role')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('nav.transactions')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.8, textAlign: 'center' }]}>{t('action.actions')}</Text>
-            </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
+          >
+            <View style={[styles.table, { minWidth: 780 }]}>
+              {/* Header */}
+              <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 2.2 }]}>{t('common.user')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.role')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('nav.transactions')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.8, textAlign: 'center' }]}>{t('action.actions')}</Text>
+              </View>
 
-            {/* Rows */}
-            {users.map((u) => {
-              const isSelf = u.id === currentUser?.id;
-              return (
-                <View key={u.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
-                  <View style={[styles.td, { flex: 2, flexDirection: 'row', alignItems: 'center' }]}>
+              {/* Rows */}
+              {users.map((u) => {
+                const isSelf = u.id === currentUser?.id;
+                return (
+                  <View key={u.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
+                    <View style={[styles.td, { flex: 2.2, flexDirection: 'row', alignItems: 'center' }]}>
                     <View style={[styles.avatar, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight }]}>
                       <Text style={[styles.avatarText, { color: colors.primary }]}>
                         {u.name.charAt(0).toUpperCase()}
@@ -332,7 +347,8 @@ export function TeamScreen() {
                 </View>
               );
             })}
-          </View>
+            </View>
+          </ScrollView>
         )}
       </Card>
 
@@ -563,6 +579,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 28,
   },
+  containerMobile: {
+    padding: 14,
+  },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -579,7 +598,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchBox: {
-    width: 260,
+    flex: 1,
+    minWidth: 200,
   },
   chipsRow: {
     flexDirection: 'row',
@@ -616,7 +636,7 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
@@ -624,16 +644,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
+    paddingHorizontal: 8,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
   },
   td: {
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   avatar: {
     width: 32,

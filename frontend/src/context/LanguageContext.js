@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { t as translate, formatCurrency as fmtCurrency, formatDate as fmtDate } from '../i18n';
+import {
+  t as translate,
+  formatCurrency as fmtCurrency,
+  formatDate as fmtDate,
+  reverseCurrency as revCurrency,
+  localCurrencySymbol as getCurrencySymbol,
+  localCurrencyPlaceholder as getCurrencyPlaceholder,
+  getLocalizedName as getLocName,
+} from '../i18n';
 
 const LanguageContext = createContext({
   language: 'id',
@@ -8,6 +16,10 @@ const LanguageContext = createContext({
   t: (key) => key,
   formatCurrency: (amount) => String(amount),
   formatDate: (date) => String(date),
+  reverseCurrency: (amount) => Number(amount) || 0,
+  localCurrencySymbol: () => 'Rp',
+  localCurrencyPlaceholder: () => '0',
+  getLocalizedName: (item) => (item ? item.name || '' : ''),
 });
 
 const LANGUAGE_STORAGE_KEY = 'app_language';
@@ -43,9 +55,25 @@ export function LanguageProvider({ children }) {
   const t = (key) => translate(key, language);
   const formatCurrency = (amount) => fmtCurrency(amount, language);
   const formatDate = (date, options) => fmtDate(date, language, options);
+  const reverseCurrency = (amount) => revCurrency(amount, language);
+  const localCurrencySymbol = () => getCurrencySymbol(language);
+  const localCurrencyPlaceholder = () => getCurrencyPlaceholder(language);
+  const getLocalizedName = (item) => getLocName(item, language);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, formatCurrency, formatDate }}>
+    <LanguageContext.Provider
+      value={{
+        language,
+        setLanguage,
+        t,
+        formatCurrency,
+        formatDate,
+        reverseCurrency,
+        localCurrencySymbol,
+        localCurrencyPlaceholder,
+        getLocalizedName,
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );

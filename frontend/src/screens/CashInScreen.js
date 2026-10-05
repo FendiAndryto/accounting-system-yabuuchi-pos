@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
@@ -18,7 +19,17 @@ import { FormInput } from '../components/common/FormInput';
 
 export function CashInScreen({ onTransactionAdded }) {
   const { colors } = useTheme();
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const {
+    t,
+    formatCurrency,
+    formatDate,
+    reverseCurrency,
+    localCurrencySymbol,
+    localCurrencyPlaceholder,
+    getLocalizedName,
+    language,
+  } = useLanguage();
+  const { isMobile } = useResponsive();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [accounts, setAccounts] = useState([]);
@@ -78,6 +89,8 @@ export function CashInScreen({ onTransactionAdded }) {
       return;
     }
 
+    const finalAmountInIdr = reverseCurrency(numAmount);
+
     try {
       setErrorMsg('');
       setSuccessMsg('');
@@ -86,7 +99,7 @@ export function CashInScreen({ onTransactionAdded }) {
       await accountingService.createTransaction({
         date,
         type: 'cash_in',
-        amount: numAmount,
+        amount: finalAmountInIdr,
         account_id: parseInt(accountId),
         category_id: parseInt(categoryId),
         payment_method: paymentMethod,
@@ -108,13 +121,31 @@ export function CashInScreen({ onTransactionAdded }) {
     }
   };
 
-  const paymentMethods = ['Transfer Bank', 'Tunai', 'QRIS', 'Giro', 'Lainnya'];
+  const idrEquivalent = reverseCurrency(parseFloat(amount) || 0);
+
+  const paymentMethods = [
+    { value: 'Transfer Bank', key: 'payment.transfer_bank' },
+    { value: 'Tunai', key: 'payment.cash' },
+    { value: 'QRIS', key: 'payment.qris' },
+    { value: 'Giro', key: 'payment.giro' },
+    { value: 'Lainnya', key: 'payment.other' },
+  ];
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
-      <View style={styles.layoutRow}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={[
+        styles.contentContainer,
+        isMobile && styles.contentContainerMobile,
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.layoutRow, isMobile && styles.layoutRowMobile]}>
         {/* Form Column */}
-        <View style={styles.formCol}>
+        <View style={[styles.formCol, isMobile && styles.colMobile]}>
           <Card
             title={t('screen.cash_in.title')}
             subtitle={t('screen.cash_in.subtitle')}
@@ -131,13 +162,17 @@ export function CashInScreen({ onTransactionAdded }) {
             />
 
             <FormInput
-              label={t('form.enter_amount')}
+              label={`${t('common.amount')} (${localCurrencySymbol()})`}
               value={amount}
               onChangeText={setAmount}
-              placeholder="5000000"
+              placeholder={localCurrencyPlaceholder()}
               keyboardType="numeric"
               required
-              helperText={t('common.rate_info')}
+              helperText={
+                language !== 'id' && amount && parseFloat(amount) > 0
+                  ? `${t('form.idr_equivalent')} Rp ${idrEquivalent.toLocaleString('id-ID')} • ${t('common.rate_info')}`
+                  : t('common.rate_info')
+              }
             />
 
             {/* Rekening Tujuan Selector */}
@@ -170,7 +205,7 @@ export function CashInScreen({ onTransactionAdded }) {
                         String(acc.id) === String(accountId) && { color: colors.cashIn, fontWeight: '700' },
                       ]}
                     >
-                      {acc.name}
+                      {getLocalizedName(acc)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -207,7 +242,7 @@ export function CashInScreen({ onTransactionAdded }) {
                         String(cat.id) === String(categoryId) && { color: colors.cashIn, fontWeight: '700' },
                       ]}
                     >
-                      {cat.name}
+                      {getLocalizedName(cat)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -216,29 +251,29 @@ export function CashInScreen({ onTransactionAdded }) {
 
             {/* Metode Pembayaran */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Metode Pembayaran</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('common.payment_method')}</Text>
               <View style={styles.optionsWrap}>
                 {paymentMethods.map((m) => (
                   <TouchableOpacity
-                    key={m}
+                    key={m.value}
                     style={[
                       styles.optionChip,
                       { backgroundColor: colors.surface, borderColor: colors.border },
-                      paymentMethod === m && {
+                      paymentMethod === m.value && {
                         backgroundColor: colors.primarySubtle,
                         borderColor: colors.primaryLight,
                       },
                     ]}
-                    onPress={() => setPaymentMethod(m)}
+                    onPress={() => setPaymentMethod(m.value)}
                   >
                     <Text
                       style={[
                         styles.optionChipText,
                         { color: colors.textSecondary },
-                        paymentMethod === m && { color: colors.primary, fontWeight: '700' },
+                        paymentMethod === m.value && { color: colors.primary, fontWeight: '700' },
                       ]}
                     >
-                      {m}
+                      {t(m.key)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -266,7 +301,7 @@ export function CashInScreen({ onTransactionAdded }) {
         </View>
 
         {/* Recent Transactions Column */}
-        <View style={styles.recentCol}>
+        <View style={[styles.recentCol, isMobile && styles.colMobile]}>
           <Card
             title={t('nav.cash_in')}
             subtitle={t('dashboard.recent_transactions')}
@@ -281,17 +316,19 @@ export function CashInScreen({ onTransactionAdded }) {
                   <View style={[styles.recentIndicator, { backgroundColor: colors.cashInBg }]}>
                     <Feather name="arrow-down-left" size={13} color={colors.cashIn} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.recentDesc, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {tx.description || t('nav.cash_in')}
-                    </Text>
-                    <Text style={[styles.recentMeta, { color: colors.textMuted }]}>
-                      {tx.category?.name} • {tx.account?.name} • {formatDate(tx.date, { day: 'numeric', month: 'short' })}
+                  <View style={styles.recentMainCol}>
+                    <View style={styles.recentTopRow}>
+                      <Text style={[styles.recentDesc, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {tx.description || t('nav.cash_in')}
+                      </Text>
+                      <Text style={[styles.recentAmount, { color: colors.cashIn }]}>
+                        +{formatCurrency(tx.amount)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.recentMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                      {getLocalizedName(tx.category)} • {getLocalizedName(tx.account)} • {formatDate(tx.date, { day: 'numeric', month: 'short' })}
                     </Text>
                   </View>
-                  <Text style={[styles.recentAmount, { color: colors.cashIn }]}>
-                    +{formatCurrency(tx.amount)}
-                  </Text>
                 </View>
               ))
             )}
@@ -305,20 +342,49 @@ export function CashInScreen({ onTransactionAdded }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+  },
+  contentContainer: {
     padding: 28,
+    paddingBottom: 80,
+    width: '100%',
+    maxWidth: '100%',
+  },
+  contentContainerMobile: {
+    padding: 14,
+    paddingBottom: 80,
+    width: '100%',
+    maxWidth: '100%',
   },
   layoutRow: {
+    width: '100%',
+    maxWidth: '100%',
     flexDirection: 'row',
     gap: 20,
     flexWrap: 'wrap',
   },
+  layoutRowMobile: {
+    width: '100%',
+    maxWidth: '100%',
+    flexDirection: 'column',
+    gap: 16,
+  },
   formCol: {
     flex: 1.5,
-    minWidth: 340,
+    minWidth: 320,
+    maxWidth: '100%',
+    width: '100%',
   },
   recentCol: {
     flex: 1,
-    minWidth: 300,
+    minWidth: 280,
+    maxWidth: '100%',
+    width: '100%',
+  },
+  colMobile: {
+    minWidth: 0,
+    width: '100%',
+    maxWidth: '100%',
   },
   alertError: {
     padding: 12,
@@ -346,6 +412,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    width: '100%',
+    maxWidth: '100%',
   },
   optionChip: {
     flexDirection: 'row',
@@ -378,17 +446,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 10,
   },
+  recentMainCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  recentTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   recentDesc: {
     fontSize: 13,
     fontWeight: '600',
-  },
-  recentMeta: {
-    fontSize: 11,
-    marginTop: 2,
+    flex: 1,
+    minWidth: 0,
   },
   recentAmount: {
     fontSize: 13,
     fontWeight: '700',
-    marginLeft: 8,
+    flexShrink: 0,
+    textAlign: 'right',
+  },
+  recentMeta: {
+    fontSize: 11,
+    marginTop: 3,
   },
 });

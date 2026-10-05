@@ -13,6 +13,7 @@ import {
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+import { ResponsiveProvider, useResponsive } from './src/context/ResponsiveContext';
 import { Sidebar } from './src/components/Sidebar';
 import { Header } from './src/components/Header';
 import { FloatingAiAssistant } from './src/components/FloatingAiAssistant';
@@ -228,9 +229,11 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
-          <AuthProvider>
-            <MainAppLayout />
-          </AuthProvider>
+          <ResponsiveProvider>
+            <AuthProvider>
+              <MainAppLayout />
+            </AuthProvider>
+          </ResponsiveProvider>
         </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
@@ -252,9 +255,12 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     position: 'relative',
     height: '100%',
+    minWidth: 0,
   },
   screenContentArea: {
     flex: 1,
+    width: '100%',
+    minWidth: 0,
   },
   splashContainer: {
     flex: 1,

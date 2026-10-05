@@ -52,6 +52,8 @@ class CategoryController extends Controller
                                 return [
                                     'id' => $cat->id,
                                     'name' => $cat->name,
+                                    'name_en' => $cat->name_en,
+                                    'name_ja' => $cat->name_ja,
                                     'type' => $cat->type,
                                     'description' => $cat->description,
                                     'is_active' => (bool) $cat->is_active,
@@ -74,6 +76,8 @@ class CategoryController extends Controller
 
         $category = Category::create([
             'name' => $validated['name'],
+            'name_en' => $validated['name_en'] ?? null,
+            'name_ja' => $validated['name_ja'] ?? null,
             'type' => $validated['type'],
             'description' => $validated['description'] ?? null,
             'is_active' => true,
@@ -84,6 +88,8 @@ class CategoryController extends Controller
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
+                'name_en' => $category->name_en,
+                'name_ja' => $category->name_ja,
                 'type' => $category->type,
                 'description' => $category->description,
                 'is_active' => (bool) $category->is_active,
@@ -111,6 +117,12 @@ class CategoryController extends Controller
         }
 
         $category->name = $validated['name'];
+        if (array_key_exists('name_en', $validated)) {
+            $category->name_en = $validated['name_en'];
+        }
+        if (array_key_exists('name_ja', $validated)) {
+            $category->name_ja = $validated['name_ja'];
+        }
         $category->type = $validated['type'];
         $category->description = $validated['description'] ?? null;
         $category->save();
@@ -120,6 +132,8 @@ class CategoryController extends Controller
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
+                'name_en' => $category->name_en,
+                'name_ja' => $category->name_ja,
                 'type' => $category->type,
                 'description' => $category->description,
                 'is_active' => (bool) $category->is_active,

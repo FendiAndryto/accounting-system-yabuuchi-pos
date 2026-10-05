@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
@@ -20,7 +21,8 @@ import { FormInput } from '../components/common/FormInput';
 
 export function MasterCategoriesScreen() {
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { t, getLocalizedName } = useLanguage();
+  const { isMobile } = useResponsive();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'cash_in' | 'cash_out'
@@ -34,6 +36,8 @@ export function MasterCategoriesScreen() {
 
   // Form State
   const [formName, setFormName] = useState('');
+  const [formNameEn, setFormNameEn] = useState('');
+  const [formNameJa, setFormNameJa] = useState('');
   const [formType, setFormType] = useState('cash_in');
   const [formDesc, setFormDesc] = useState('');
   const [formError, setFormError] = useState('');
@@ -60,6 +64,8 @@ export function MasterCategoriesScreen() {
 
   const handleOpenAdd = () => {
     setFormName('');
+    setFormNameEn('');
+    setFormNameJa('');
     setFormType('cash_in');
     setFormDesc('');
     setFormError('');
@@ -69,6 +75,8 @@ export function MasterCategoriesScreen() {
   const handleOpenEdit = (cat) => {
     setSelectedCategory(cat);
     setFormName(cat.name);
+    setFormNameEn(cat.name_en || '');
+    setFormNameJa(cat.name_ja || '');
     setFormType(cat.type);
     setFormDesc(cat.description || '');
     setFormError('');
@@ -85,6 +93,8 @@ export function MasterCategoriesScreen() {
       setSubmitting(true);
       await accountingService.createCategory({
         name: formName.trim(),
+        name_en: formNameEn.trim() || null,
+        name_ja: formNameJa.trim() || null,
         type: formType,
         description: formDesc.trim() || null,
       });
@@ -108,6 +118,8 @@ export function MasterCategoriesScreen() {
       setSubmitting(true);
       await accountingService.updateCategory(selectedCategory.id, {
         name: formName.trim(),
+        name_en: formNameEn.trim() || null,
+        name_ja: formNameJa.trim() || null,
         type: formType,
         description: formDesc.trim() || null,
       });
@@ -146,7 +158,15 @@ export function MasterCategoriesScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[
+        styles.container,
+        isMobile && styles.containerMobile,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={{ paddingBottom: 80 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Top Action Bar */}
       <View style={styles.actionBar}>
         <View style={styles.filterChipsRow}>
@@ -200,23 +220,33 @@ export function MasterCategoriesScreen() {
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
-          <View style={styles.table}>
-            {/* Header */}
-            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('master.category_name')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.category_type')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('nav.transactions')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
-            </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
+          >
+            <View style={[styles.table, { minWidth: 760 }]}>
+              {/* Header */}
+              <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 2.2 }]}>{t('master.category_name')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.category_type')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('nav.transactions')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
+              </View>
 
-            {/* Rows */}
-            {categories.map((cat) => {
-              const isIn = cat.type === 'cash_in';
-              return (
-                <View key={cat.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
-                  <View style={[styles.td, { flex: 2 }]}>
-                    <Text style={[styles.catName, { color: colors.textPrimary }]}>{cat.name}</Text>
+              {/* Rows */}
+              {categories.map((cat) => {
+                const isIn = cat.type === 'cash_in';
+                return (
+                  <View key={cat.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
+                    <View style={[styles.td, { flex: 2.2 }]}>
+                    <Text style={[styles.catName, { color: colors.textPrimary }]}>{getLocalizedName(cat)}</Text>
+                    {(cat.name_en || cat.name_ja) && (
+                      <Text style={{ fontSize: 11, color: colors.textLight, marginTop: 2 }}>
+                        {[cat.name_en && `EN: ${cat.name_en}`, cat.name_ja && `JA: ${cat.name_ja}`].filter(Boolean).join(' • ')}
+                      </Text>
+                    )}
                     {cat.description ? (
                       <Text style={[styles.catDesc, { color: colors.textMuted }]} numberOfLines={1}>
                         {cat.description}
@@ -294,7 +324,8 @@ export function MasterCategoriesScreen() {
                 </View>
               );
             })}
-          </View>
+            </View>
+          </ScrollView>
         )}
       </Card>
 
@@ -327,6 +358,20 @@ export function MasterCategoriesScreen() {
           value={formName}
           onChangeText={setFormName}
           required
+        />
+
+        <FormInput
+          label={t('master.name_en')}
+          placeholder="e.g. Client Payment, Office Rent"
+          value={formNameEn}
+          onChangeText={setFormNameEn}
+        />
+
+        <FormInput
+          label={t('master.name_ja')}
+          placeholder="e.g. クライアント入金, オフィス賃料"
+          value={formNameJa}
+          onChangeText={setFormNameJa}
         />
 
         <View style={styles.fieldGroup}>
@@ -414,6 +459,18 @@ export function MasterCategoriesScreen() {
           required
         />
 
+        <FormInput
+          label={t('master.name_en')}
+          value={formNameEn}
+          onChangeText={setFormNameEn}
+        />
+
+        <FormInput
+          label={t('master.name_ja')}
+          value={formNameJa}
+          onChangeText={setFormNameJa}
+        />
+
         <View style={styles.fieldGroup}>
           <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('master.category_type')} *</Text>
           <View style={styles.typeSelectorRow}>
@@ -480,16 +537,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 28,
   },
+  containerMobile: {
+    padding: 14,
+  },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    gap: 16,
+    gap: 12,
+    flexWrap: 'wrap',
   },
   filterChipsRow: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   filterChip: {
     paddingVertical: 8,
@@ -522,7 +584,7 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
@@ -530,16 +592,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.3,
+    paddingHorizontal: 8,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
   },
   td: {
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   catName: {
     fontSize: 14,

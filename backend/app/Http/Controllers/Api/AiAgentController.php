@@ -22,12 +22,14 @@ class AiAgentController extends Controller
         $validated = $request->validate([
             'message' => 'required|string',
             'history' => 'nullable|array',
+            'language' => 'nullable|string|in:id,en,ja',
         ]);
 
         $message = $validated['message'];
         $history = $validated['history'] ?? [];
+        $language = $validated['language'] ?? 'id';
 
-        $response = $this->geminiService->chat($message, $history);
+        $response = $this->geminiService->chat($message, $history, $language);
 
         return response()->json([
             'status' => 'success',

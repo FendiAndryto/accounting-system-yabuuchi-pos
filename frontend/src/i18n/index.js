@@ -1,4 +1,6 @@
 export const EXCHANGE_RATES = {
+  USD_TO_IDR: 16000,
+  JPY_TO_IDR: 105,
   USD_PER_IDR: 1 / 16000, // 1 USD ≈ 16,000 IDR
   JPY_PER_IDR: 1 / 105,   // 1 JPY ≈ 105 IDR
 };
@@ -69,6 +71,20 @@ export const translations = {
     'common.inactive': 'Nonaktif',
     'common.rate_info': 'Kurs Acuan: 1 USD ≈ Rp 16.000 | 1 JPY ≈ Rp 105',
 
+    // Payment methods
+    'payment.transfer_bank': 'Transfer Bank',
+    'payment.cash': 'Tunai',
+    'payment.qris': 'QRIS',
+    'payment.debit': 'Kartu Debit',
+    'payment.giro': 'Giro / Cek',
+    'payment.other': 'Lainnya',
+    'common.payment_method': 'Metode Pembayaran',
+
+    // Currency input
+    'form.amount_locale': 'Nominal Kas Masuk / Keluar (Rp)',
+    'form.idr_equivalent': 'Setara IDR:',
+    'form.enter_amount_locale': 'Masukkan nominal rupiah',
+
     // Dashboard
     'dashboard.total_balance': 'Total Saldo Kas & Bank',
     'dashboard.total_cash_in': 'Total Kas Masuk (Bulan Ini)',
@@ -96,6 +112,8 @@ export const translations = {
     'master.bank_name': 'Nama Bank / Kas',
     'master.account_no': 'Nomor Rekening',
     'master.init_balance': 'Saldo Awal (Rp)',
+    'master.name_en': 'Nama Bahasa Inggris (Opsional)',
+    'master.name_ja': 'Nama Bahasa Jepang (Opsional)',
     'master.add_category': 'Tambah Kategori',
     'master.edit_category': 'Ubah Kategori',
     'master.category_name': 'Nama Kategori',
@@ -107,6 +125,27 @@ export const translations = {
     'history.filter_in': 'Hanya Kas Masuk',
     'history.filter_out': 'Hanya Kas Keluar',
     'history.delete_confirm': 'Apakah Anda yakin ingin menghapus transaksi ini?',
+
+    // AI Assistant
+    'ai.fab_title': 'Asisten AI',
+    'ai.header_title': 'AI Assistant',
+    'ai.header_subtitle': 'Gemini AI Online',
+    'ai.welcome_msg': 'Halo! Saya Asisten AI Keuangan AUBE TERRA. Saya dapat membantu menganalisis arus kas, memeriksa saldo rekening, maupun mencatat transaksi kas masuk dan keluar secara cerdas.',
+    'ai.quick_expense': 'Berapa total pengeluaran bulan ini?',
+    'ai.quick_income': 'Ringkas pemasukan bulan ini',
+    'ai.quick_balance': 'Berapa saldo kas aktif saat ini?',
+    'ai.input_placeholder': 'Tulis pesan atau instruksi akuntansi...',
+    'ai.reset_msg': 'Riwayat percakapan telah dibersihkan. Ada yang bisa saya bantu terkait keuangan perusahaan?',
+    'ai.thinking': 'AI sedang menganalisis...',
+    'ai.draft_title': 'Draft Transaksi Disiapkan',
+    'ai.draft_save_btn': 'Simpan ke Buku Kas',
+    'ai.draft_cancel_btn': 'Batalkan Draft',
+    'ai.draft_saved': '✓ Transaksi berhasil diverifikasi dan disimpan ke sistem pembukuan!',
+    'ai.draft_cancelled': 'Draft transaksi dibatalkan.',
+    'ai.save_failed': 'Gagal menyimpan transaksi dari draft AI.',
+    'ai.error_generic': 'Maaf, terjadi kendala saat menghubungkan ke AI Backend. Silakan coba lagi.',
+    'ai.analyzed': 'Data berhasil dianalisis.',
+    'ai.disclaimer': 'AUBE TERRA AI Agent • Verifikasi draft sebelum disimpan',
 
     // Theme & Language
     'theme.toggle': 'Ganti Tema',
@@ -183,6 +222,20 @@ export const translations = {
     'common.inactive': 'Inactive',
     'common.rate_info': 'Ref Rate: 1 USD ≈ Rp 16,000 | 1 JPY ≈ Rp 105',
 
+    // Payment methods
+    'payment.transfer_bank': 'Bank Transfer',
+    'payment.cash': 'Cash',
+    'payment.qris': 'QRIS',
+    'payment.debit': 'Debit Card',
+    'payment.giro': 'Giro / Cheque',
+    'payment.other': 'Other',
+    'common.payment_method': 'Payment Method',
+
+    // Currency input
+    'form.amount_locale': 'Amount (USD $)',
+    'form.idr_equivalent': 'IDR Equivalent:',
+    'form.enter_amount_locale': 'Enter amount in USD',
+
     // Dashboard
     'dashboard.total_balance': 'Total Cash & Bank Balance',
     'dashboard.total_cash_in': 'Total Cash In (This Month)',
@@ -210,6 +263,8 @@ export const translations = {
     'master.bank_name': 'Bank / Cash Name',
     'master.account_no': 'Account Number',
     'master.init_balance': 'Initial Balance (IDR)',
+    'master.name_en': 'English Name (Optional)',
+    'master.name_ja': 'Japanese Name (Optional)',
     'master.add_category': 'Add Category',
     'master.edit_category': 'Edit Category',
     'master.category_name': 'Category Name',
@@ -221,6 +276,27 @@ export const translations = {
     'history.filter_in': 'Cash In Only',
     'history.filter_out': 'Cash Out Only',
     'history.delete_confirm': 'Are you sure you want to delete this transaction?',
+
+    // AI Assistant
+    'ai.fab_title': 'AI Assistant',
+    'ai.header_title': 'AI Assistant',
+    'ai.header_subtitle': 'Gemini AI Online',
+    'ai.welcome_msg': 'Hello! I am the AUBE TERRA Financial AI Assistant. I can help analyze cash flow, check bank balances, or intelligently record cash in and cash out transactions.',
+    'ai.quick_expense': 'What are the total expenses this month?',
+    'ai.quick_income': 'Summarize this month income',
+    'ai.quick_balance': 'What is the current active cash balance?',
+    'ai.input_placeholder': 'Type a message or accounting prompt...',
+    'ai.reset_msg': 'Conversation history cleared. How can I help with company finances?',
+    'ai.thinking': 'AI is analyzing...',
+    'ai.draft_title': 'Transaction Draft Prepared',
+    'ai.draft_save_btn': 'Save to Cash Book',
+    'ai.draft_cancel_btn': 'Discard Draft',
+    'ai.draft_saved': '✓ Transaction successfully verified and saved to ledger!',
+    'ai.draft_cancelled': 'Transaction draft discarded.',
+    'ai.save_failed': 'Failed to save transaction from AI draft.',
+    'ai.error_generic': 'Sorry, unable to connect to AI Backend. Please try again.',
+    'ai.analyzed': 'Data analyzed successfully.',
+    'ai.disclaimer': 'AUBE TERRA AI Agent • Verify draft before saving',
 
     // Theme & Language
     'theme.toggle': 'Toggle Theme',
@@ -297,6 +373,20 @@ export const translations = {
     'common.inactive': '無効',
     'common.rate_info': '参考レート: 1 USD ≈ 16,000 Rp | 1 JPY ≈ 105 Rp',
 
+    // Payment methods
+    'payment.transfer_bank': '銀行振込',
+    'payment.cash': '現金',
+    'payment.qris': 'QRIS',
+    'payment.debit': 'デビットカード',
+    'payment.giro': '小切手 / 手形',
+    'payment.other': 'その他',
+    'common.payment_method': '支払方法',
+
+    // Currency input
+    'form.amount_locale': '金額 (日本円 ¥)',
+    'form.idr_equivalent': 'IDR換算額:',
+    'form.enter_amount_locale': '日本円で金額を入力',
+
     // Dashboard
     'dashboard.total_balance': '現金・口座合計残高',
     'dashboard.total_cash_in': '当月入金合計',
@@ -324,6 +414,8 @@ export const translations = {
     'master.bank_name': '銀行名 / 現金名',
     'master.account_no': '口座番号',
     'master.init_balance': '初期残高 (Rp)',
+    'master.name_en': '英語名称（任意）',
+    'master.name_ja': '日本語名称（任意）',
     'master.add_category': '新規カテゴリ追加',
     'master.edit_category': 'カテゴリ編集',
     'master.category_name': 'カテゴリ名',
@@ -335,6 +427,27 @@ export const translations = {
     'history.filter_in': '入金のみ',
     'history.filter_out': '出金のみ',
     'history.delete_confirm': 'この取引を削除してもよろしいですか？',
+
+    // AI Assistant
+    'ai.fab_title': 'AIアシスタント',
+    'ai.header_title': 'AIアシスタント',
+    'ai.header_subtitle': 'Gemini AI オンライン',
+    'ai.welcome_msg': 'こんにちは！AUBE TERRA専属のAI財務アシスタントです。キャッシュフローの分析、口座残高の確認、インテリジェントな入出金記録をサポートします。',
+    'ai.quick_expense': '今月の支出合計はいくらですか？',
+    'ai.quick_income': '今月の収入の概要を表示して',
+    'ai.quick_balance': '現在の有効現金残高はいくらですか？',
+    'ai.input_placeholder': 'メッセージまたは会計の指示を入力...',
+    'ai.reset_msg': '会話履歴をリセットしました。会社財務について何かサポートできますか？',
+    'ai.thinking': 'AIが分析中...',
+    'ai.draft_title': '取引ドラフトが準備されました',
+    'ai.draft_save_btn': '出納帳に保存',
+    'ai.draft_cancel_btn': 'ドラフトを破棄',
+    'ai.draft_saved': '✓ 取引が正常に確認され、出納帳に保存されました！',
+    'ai.draft_cancelled': '取引ドラフトを破棄しました。',
+    'ai.save_failed': 'AIドラフトからの取引保存に失敗しました。',
+    'ai.error_generic': '申し訳ありません。AIバックエンドへの接続でエラーが発生しました。',
+    'ai.analyzed': 'データを正常に分析しました。',
+    'ai.disclaimer': 'AUBE TERRA AI Agent • 保存前にドラフトをご確認ください',
 
     // Theme & Language
     'theme.toggle': 'テーマ切替',
@@ -386,6 +499,56 @@ export function formatCurrency(amount, lang = 'id') {
 
   // Default: id
   return `Rp ${Math.round(numericAmount).toLocaleString('id-ID')}`;
+}
+
+/**
+ * Convert user input amount in active locale currency to IDR benchmark
+ * - en: USD -> IDR (amount * 16,000)
+ * - ja: JPY -> IDR (amount * 105)
+ * - id: IDR -> IDR (amount)
+ */
+export function reverseCurrency(amount, lang = 'id') {
+  const numeric = Number(amount) || 0;
+  if (lang === 'en') {
+    return Math.round(numeric * EXCHANGE_RATES.USD_TO_IDR);
+  }
+  if (lang === 'ja') {
+    return Math.round(numeric * EXCHANGE_RATES.JPY_TO_IDR);
+  }
+  return Math.round(numeric);
+}
+
+/**
+ * Get currency symbol for active locale
+ */
+export function localCurrencySymbol(lang = 'id') {
+  if (lang === 'en') return '$';
+  if (lang === 'ja') return '¥';
+  return 'Rp';
+}
+
+/**
+ * Get currency input placeholder for active locale
+ */
+export function localCurrencyPlaceholder(lang = 'id') {
+  if (lang === 'en') return '0.00';
+  if (lang === 'ja') return '0';
+  return '0';
+}
+
+/**
+ * Extract localized name from entity with fallback to default name
+ */
+export function getLocalizedName(item, lang = 'id') {
+  if (!item) return '';
+  if (typeof item === 'string') return item;
+  if (lang === 'en' && item.name_en && item.name_en.trim()) {
+    return item.name_en.trim();
+  }
+  if (lang === 'ja' && item.name_ja && item.name_ja.trim()) {
+    return item.name_ja.trim();
+  }
+  return item.name || '';
 }
 
 /**

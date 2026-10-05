@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 
 export function Header({ title, subtitle, onRefresh, refreshing, rightElement }) {
   const { isDark, toggleTheme, colors } = useTheme();
   const { language, setLanguage, t, formatDate } = useLanguage();
+  const { isMobile, toggleSidebar } = useResponsive();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
 
   const currentDate = formatDate(new Date(), {
@@ -26,21 +28,36 @@ export function Header({ title, subtitle, onRefresh, refreshing, rightElement })
   const currentLangObj = languages.find((l) => l.code === language) || languages[0];
 
   return (
-    <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-      <View style={styles.titleContainer}>
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
-        {subtitle && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
+    <View style={[styles.header, isMobile && styles.headerMobile, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <View style={styles.leftRow}>
+        {isMobile && (
+          <TouchableOpacity
+            style={[styles.hamburgerBtn, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
+            onPress={toggleSidebar}
+            activeOpacity={0.7}
+          >
+            <Feather name="menu" size={18} color={colors.textPrimary} />
+          </TouchableOpacity>
+        )}
+        <View style={styles.titleContainer}>
+          <Text style={[styles.title, isMobile && styles.titleMobile, { color: colors.textPrimary }]} numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle && !isMobile && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
+        </View>
       </View>
 
-      <View style={styles.rightContainer}>
-        {/* Date Badge with soft Feather calendar icon */}
-        <View style={[styles.dateBadge, { backgroundColor: colors.surfaceSecondary, borderColor: colors.borderLight }]}>
-          <Feather name="calendar" size={13} color={colors.textMuted} style={styles.iconSpaced} />
-          <Text style={[styles.dateText, { color: colors.textSecondary }]}>{currentDate}</Text>
-        </View>
+      <View style={[styles.rightContainer, isMobile && styles.rightContainerMobile]}>
+        {/* Date Badge (Desktop/Tablet only) */}
+        {!isMobile && (
+          <View style={[styles.dateBadge, { backgroundColor: colors.surfaceSecondary, borderColor: colors.borderLight }]}>
+            <Feather name="calendar" size={13} color={colors.textMuted} style={styles.iconSpaced} />
+            <Text style={[styles.dateText, { color: colors.textSecondary }]}>{currentDate}</Text>
+          </View>
+        )}
 
-        {/* Currency Benchmark info tag when non-ID is selected */}
-        {language !== 'id' && (
+        {/* Currency Benchmark info tag (Desktop only) */}
+        {!isMobile && language !== 'id' && (
           <View style={[styles.rateBadge, { backgroundColor: colors.surfaceSecondary, borderColor: colors.borderLight }]}>
             <Text style={[styles.rateText, { color: colors.textMuted }]}>
               {language === 'en' ? '1 USD ≈ Rp 16k' : '1 JPY ≈ Rp 105'}
@@ -122,20 +139,27 @@ export function Header({ title, subtitle, onRefresh, refreshing, rightElement })
         {/* Refresh Button */}
         {onRefresh && (
           <TouchableOpacity
-            style={[styles.refreshBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight }]}
+            style={[
+              styles.refreshBtn,
+              isMobile && styles.refreshBtnMobile,
+              { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight },
+            ]}
             onPress={onRefresh}
             activeOpacity={0.7}
             disabled={refreshing}
+            title={t('action.refresh')}
           >
             <Feather
               name="refresh-cw"
               size={13}
               color={colors.primary}
-              style={[styles.iconSpaced, refreshing && { transform: [{ rotate: '45deg' }] }]}
+              style={[!isMobile && styles.iconSpaced, refreshing && { transform: [{ rotate: '45deg' }] }]}
             />
-            <Text style={[styles.refreshText, { color: colors.primary }]}>
-              {refreshing ? t('action.refreshing') : t('action.refresh')}
-            </Text>
+            {!isMobile && (
+              <Text style={[styles.refreshText, { color: colors.primary }]}>
+                {refreshing ? t('action.refreshing') : t('action.refresh')}
+              </Text>
+            )}
           </TouchableOpacity>
         )}
 
@@ -155,13 +179,40 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 100,
   },
+  headerMobile: {
+    height: 60,
+    paddingHorizontal: 12,
+  },
+  leftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  hamburgerBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
   titleContainer: {
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: -0.4,
+  },
+  titleMobile: {
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 12,
@@ -172,6 +223,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     position: 'relative',
+    flexShrink: 0,
+  },
+  rightContainerMobile: {
+    gap: 6,
   },
   iconSpaced: {
     marginRight: 6,
@@ -261,6 +316,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: theme.borderRadius.md,
     height: 34,
+  },
+  refreshBtnMobile: {
+    width: 34,
+    paddingHorizontal: 0,
+    justifyContent: 'center',
   },
   refreshText: {
     fontSize: 12,

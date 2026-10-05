@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { aiService } from '../services/aiService';
 import { accountingService } from '../services/accountingService';
@@ -17,6 +19,8 @@ import { Badge } from './common/Badge';
 
 export function FloatingAiAssistant({ onDataChanged }) {
   const { colors } = useTheme();
+  const { language, t, formatCurrency } = useLanguage();
+  const { isMobile, height } = useResponsive();
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -24,13 +28,29 @@ export function FloatingAiAssistant({ onDataChanged }) {
     {
       id: 'welcome',
       role: 'assistant',
-      content:
-        'Halo! Saya Asisten AI Keuangan AUBE TERRA. Saya dapat membantu menganalisis arus kas, memeriksa saldo rekening, maupun mencatat transaksi kas masuk dan keluar secara cerdas.',
+      content: t('ai.welcome_msg'),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
 
   const scrollViewRef = useRef(null);
+
+  // Sync welcome message if language changes and no real chat has started
+  useEffect(() => {
+    setMessages((prev) => {
+      if (prev.length === 1 && prev[0].id === 'welcome') {
+        return [
+          {
+            id: 'welcome',
+            role: 'assistant',
+            content: t('ai.welcome_msg'),
+            timestamp: prev[0].timestamp,
+          },
+        ];
+      }
+      return prev;
+    });
+  }, [language]);
 
   useEffect(() => {
     if (isOpen && scrollViewRef.current) {
@@ -41,9 +61,9 @@ export function FloatingAiAssistant({ onDataChanged }) {
   }, [messages, isOpen]);
 
   const quickPrompts = [
-    'Berapa saldo kas aktif saat ini?',
-    'Ringkas arus kas bulan ini',
-    'Tampilkan pengeluaran terbesar',
+    t('ai.quick_balance'),
+    t('ai.quick_income'),
+    t('ai.quick_expense'),
   ];
 
   const handleSend = async (textToSend) => {
@@ -67,12 +87,13 @@ export function FloatingAiAssistant({ onDataChanged }) {
         content: m.content,
       }));
 
-      const res = await aiService.chat(text, historyPayload);
+      // Pass language to AI service so Gemini speaks in the chosen website language
+      const res = await aiService.chat(text, historyPayload, language);
 
       const aiMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: res.reply || 'Data berhasil dianalisis.',
+        content: res.reply || t('ai.analyzed'),
         tools: res.executed_tools || [],
         draftCard: res.draft_card || null,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -95,7 +116,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: 'Maaf, terjadi kendala saat menghubungkan ke AI Backend. Silakan coba lagi.',
+          content: t('ai.error_generic'),
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
@@ -134,12 +155,12 @@ export function FloatingAiAssistant({ onDataChanged }) {
         {
           id: Date.now().toString(),
           role: 'assistant',
-          content: '✓ Transaksi berhasil diverifikasi dan disimpan ke sistem pembukuan!',
+          content: t('ai.draft_saved'),
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
     } catch (e) {
-      alert(e.message || 'Gagal menyimpan transaksi dari draft AI.');
+      alert(e.message || t('ai.save_failed'));
     } finally {
       setIsTyping(false);
     }
@@ -158,17 +179,33 @@ export function FloatingAiAssistant({ onDataChanged }) {
       {
         id: Date.now().toString(),
         role: 'assistant',
-        content: 'Riwayat percakapan telah dibersihkan. Ada yang bisa saya bantu terkait keuangan perusahaan?',
+        content: t('ai.reset_msg'),
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
   };
 
   return (
-    <View style={styles.floatingContainer} pointerEvents="box-none">
-      {/* Expanded Popover Window */}
+    <View
+      style={[
+        styles.floatingContainer,
+        isMobile && styles.floatingContainerMobile,
+        isMobile && isOpen && styles.floatingContainerMobileOpen,
+      ]}
+      pointerEvents="box-none"
+    >
+      {/* Expanded Popover Window / Mobile Takeover */}
       {isOpen && (
-        <View style={[styles.popoverCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.popoverCard,
+            !isMobile && {
+              height: Math.max(320, Math.min(560, (height || 800) - 105)),
+            },
+            isMobile && styles.popoverCardMobile,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
           {/* Header */}
           <View style={[styles.popoverHeader, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
             <View style={styles.headerLeft}>
@@ -176,10 +213,10 @@ export function FloatingAiAssistant({ onDataChanged }) {
                 <Feather name="cpu" size={16} color={colors.primary} />
               </View>
               <View>
-                <Text style={[styles.popoverTitle, { color: colors.textPrimary }]}>AI Assistant</Text>
+                <Text style={[styles.popoverTitle, { color: colors.textPrimary }]}>{t('ai.header_title')}</Text>
                 <View style={styles.statusRow}>
                   <View style={[styles.onlineDot, { backgroundColor: colors.cashIn }]} />
-                  <Text style={[styles.statusText, { color: colors.textMuted }]}>Gemini AI Online</Text>
+                  <Text style={[styles.statusText, { color: colors.textMuted }]}>{t('ai.header_subtitle')}</Text>
                 </View>
               </View>
             </View>
@@ -199,7 +236,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
                 title="Tutup"
                 activeOpacity={0.7}
               >
-                <Feather name="x" size={14} color={colors.textSecondary} />
+                <Feather name="x" size={15} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -257,11 +294,11 @@ export function FloatingAiAssistant({ onDataChanged }) {
                     {/* Tool executions */}
                     {m.tools && m.tools.length > 0 && (
                       <View style={styles.toolList}>
-                        {m.tools.map((t, idx) => {
+                        {m.tools.map((tItem, idx) => {
                           const toolLabel =
-                            typeof t === 'string'
-                              ? t
-                              : (t?.tool || t?.name || 'Sistem');
+                            typeof tItem === 'string'
+                              ? tItem
+                              : (tItem?.tool || tItem?.name || 'Sistem');
                           return (
                             <View key={idx} style={[styles.toolBadge, { backgroundColor: colors.indigoBg, borderColor: colors.indigoBorder }]}>
                               <Text style={[styles.toolBadgeText, { color: colors.indigo }]}>⚡ Tool: {String(toolLabel)}</Text>
@@ -275,23 +312,23 @@ export function FloatingAiAssistant({ onDataChanged }) {
                     {m.draftCard && (
                       <View style={[styles.draftBox, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
                         <View style={styles.draftBoxHeader}>
-                          <Text style={[styles.draftTitle, { color: colors.textPrimary }]}>📋 Draf Entri Transaksi</Text>
+                          <Text style={[styles.draftTitle, { color: colors.textPrimary }]}>{t('ai.draft_title')}</Text>
                           <Badge
-                            label={m.draftCard.type === 'cash_in' ? 'Cash In' : 'Cash Out'}
+                            label={m.draftCard.type === 'cash_in' ? t('nav.cash_in') : t('nav.cash_out')}
                             variant={m.draftCard.type === 'cash_in' ? 'cash_in' : 'cash_out'}
                             size="sm"
                           />
                         </View>
                         <Text style={[styles.draftAmount, { color: colors.textPrimary }]}>
-                          {m.draftCard.amount_formatted || `Rp ${Number(m.draftCard.amount || 0).toLocaleString('id-ID')}`}
+                          {m.draftCard.amount_formatted || formatCurrency(m.draftCard.amount || 0)}
                         </Text>
                         <Text style={[styles.draftDesc, { color: colors.textSecondary }]}>
-                          {String(m.draftCard.description || 'Tanpa keterangan')}
+                          {String(m.draftCard.description || '-')}
                         </Text>
                         <Text style={[styles.draftMeta, { color: colors.textMuted }]}>
-                          {m.draftCard.account_name ? `Rekening: ${m.draftCard.account_name} • ` : ''}
-                          {m.draftCard.category_name ? `Kategori: ${m.draftCard.category_name} • ` : ''}
-                          Metode: {String(m.draftCard.payment_method || 'Transfer Bank')}
+                          {m.draftCard.account_name ? `${t('common.account')}: ${m.draftCard.account_name} • ` : ''}
+                          {m.draftCard.category_name ? `${t('common.category')}: ${m.draftCard.category_name} • ` : ''}
+                          {t('common.payment_method')}: {String(m.draftCard.payment_method || 'Transfer Bank')}
                         </Text>
 
                         {!m.draftSaved && !m.draftCancelled && (
@@ -300,22 +337,22 @@ export function FloatingAiAssistant({ onDataChanged }) {
                               style={[styles.draftCancelBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
                               onPress={() => handleCancelDraft(m.id)}
                             >
-                              <Text style={[styles.draftCancelText, { color: colors.textSecondary }]}>Batal</Text>
+                              <Text style={[styles.draftCancelText, { color: colors.textSecondary }]}>{t('ai.draft_cancel_btn')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.draftConfirmBtn, { backgroundColor: colors.cashIn }]}
                               onPress={() => handleConfirmDraft(m.draftCard, m.id)}
                             >
-                              <Text style={styles.draftConfirmText}>✓ Simpan ke Buku</Text>
+                              <Text style={styles.draftConfirmText}>{t('ai.draft_save_btn')}</Text>
                             </TouchableOpacity>
                           </View>
                         )}
 
                         {m.draftSaved && (
-                          <Text style={[styles.draftStatusSaved, { color: colors.cashIn }]}>✓ Tersimpan di Database</Text>
+                          <Text style={[styles.draftStatusSaved, { color: colors.cashIn }]}>{t('ai.draft_saved')}</Text>
                         )}
                         {m.draftCancelled && (
-                          <Text style={[styles.draftStatusCancelled, { color: colors.textMuted }]}>✕ Draf dibatalkan</Text>
+                          <Text style={[styles.draftStatusCancelled, { color: colors.textMuted }]}>{t('ai.draft_cancelled')}</Text>
                         )}
                       </View>
                     )}
@@ -330,7 +367,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
               <View style={[styles.messageWrapper, styles.assistantWrapper]}>
                 <View style={[styles.messageBubble, styles.assistantBubble, styles.typingBubble, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={[styles.typingText, { color: colors.textMuted }]}>Sedang memproses analisa...</Text>
+                  <Text style={[styles.typingText, { color: colors.textMuted }]}>{t('ai.thinking')}</Text>
                 </View>
               </View>
             )}
@@ -342,7 +379,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
               style={[styles.textInput, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, color: colors.textPrimary }]}
               value={inputMessage}
               onChangeText={setInputMessage}
-              placeholder="Tanyakan keuangan atau perintahkan catat kas..."
+              placeholder={t('ai.input_placeholder')}
               placeholderTextColor={colors.textLight}
               multiline={false}
               onSubmitEditing={() => handleSend()}
@@ -363,17 +400,21 @@ export function FloatingAiAssistant({ onDataChanged }) {
         </View>
       )}
 
-      {/* Floating Action Button (FAB) */}
-      <TouchableOpacity
-        activeOpacity={0.85}
-        style={[styles.fabButton, { backgroundColor: colors.primary }, isOpen && { backgroundColor: colors.primaryHover }]}
-        onPress={() => setIsOpen((prev) => !prev)}
-      >
-        <View style={styles.fabInner}>
-          <Feather name="cpu" size={16} color="#ffffff" style={styles.fabIcon} />
-          <Text style={styles.fabText}>{isOpen ? 'Tutup AI' : 'AI Assistant'}</Text>
-        </View>
-      </TouchableOpacity>
+      {/* Floating Action Button (FAB) - hidden on mobile when modal takeover is open */}
+      {(!isMobile || !isOpen) && (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.fabButton, isMobile && styles.fabButtonMobile, { backgroundColor: colors.primary }, isOpen && { backgroundColor: colors.primaryHover }]}
+          onPress={() => setIsOpen((prev) => !prev)}
+        >
+          <View style={styles.fabInner}>
+            <Feather name="cpu" size={16} color="#ffffff" style={styles.fabIcon} />
+            <Text style={styles.fabText}>
+              {isOpen ? (language === 'ja' ? '閉じる' : language === 'en' ? 'Close AI' : 'Tutup AI') : t('ai.fab_title')}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -386,6 +427,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     zIndex: 9999,
   },
+  floatingContainerMobile: {
+    bottom: 16,
+    right: 16,
+  },
+  floatingContainerMobileOpen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 9999,
+    alignItems: 'stretch',
+  },
   fabButton: {
     borderRadius: 9999,
     paddingVertical: 12,
@@ -393,6 +449,10 @@ const styles = StyleSheet.create({
     ...theme.shadows.fab,
     borderWidth: 1.5,
     borderColor: '#93c5fd',
+  },
+  fabButtonMobile: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   fabInner: {
     flexDirection: 'row',
@@ -410,12 +470,23 @@ const styles = StyleSheet.create({
   popoverCard: {
     width: 420,
     height: 560,
+    maxHeight: 'calc(100vh - 105px)',
     maxWidth: '92vw',
     borderRadius: theme.borderRadius.xl,
     borderWidth: 1,
     marginBottom: 16,
     ...theme.shadows.lg,
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  popoverCardMobile: {
+    width: '100%',
+    height: '100%',
+    maxWidth: '100%',
+    borderRadius: 0,
+    borderWidth: 0,
+    marginBottom: 0,
     display: 'flex',
     flexDirection: 'column',
   },
@@ -641,3 +712,4 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 });
+

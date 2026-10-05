@@ -10,6 +10,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useResponsive } from '../context/ResponsiveContext';
 import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +21,8 @@ import { FormInput } from '../components/common/FormInput';
 export function HistoryScreen() {
   const { isAdmin } = useAuth();
   const { colors } = useTheme();
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, formatCurrency, formatDate, getLocalizedName } = useLanguage();
+  const { isMobile } = useResponsive();
 
   const [loading, setLoading] = useState(true);
   const [transactions, setTransactions] = useState([]);
@@ -70,36 +72,51 @@ export function HistoryScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[
+        styles.container,
+        isMobile && styles.containerMobile,
+        { backgroundColor: colors.background },
+      ]}
+      contentContainerStyle={{ paddingBottom: 80 }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Top Ledger Summary */}
       {summary && (
-        <View style={[styles.summaryRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('common.all')}</Text>
-            <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{summary.count || transactions.length}</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ width: '100%', marginBottom: 20 }}
+          contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
+        >
+          <View style={[styles.summaryRow, isMobile && styles.summaryRowMobile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('common.all')}</Text>
+              <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{summary.count || transactions.length}</Text>
+            </View>
+            <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_in')}</Text>
+              <Text style={[styles.summaryValue, { color: colors.cashIn }]}>
+                {formatCurrency(summary.total_cash_in || 0)}
+              </Text>
+            </View>
+            <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_out')}</Text>
+              <Text style={[styles.summaryValue, { color: colors.cashOut }]}>
+                {formatCurrency(summary.total_cash_out || 0)}
+              </Text>
+            </View>
+            <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
+            <View style={styles.summaryItem}>
+              <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.net_flow')}</Text>
+              <Text style={[styles.summaryValue, { color: colors.primary }]}>
+                {formatCurrency(summary.net_flow || 0)}
+              </Text>
+            </View>
           </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_in')}</Text>
-            <Text style={[styles.summaryValue, { color: colors.cashIn }]}>
-              {formatCurrency(summary.total_cash_in || 0)}
-            </Text>
-          </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_out')}</Text>
-            <Text style={[styles.summaryValue, { color: colors.cashOut }]}>
-              {formatCurrency(summary.total_cash_out || 0)}
-            </Text>
-          </View>
-          <View style={[styles.summaryDivider, { backgroundColor: colors.borderLight }]} />
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.net_flow')}</Text>
-            <Text style={[styles.summaryValue, { color: colors.primary }]}>
-              {formatCurrency(summary.net_flow || 0)}
-            </Text>
-          </View>
-        </View>
+        </ScrollView>
       )}
 
       {/* Filter and Search Bar */}
@@ -165,82 +182,95 @@ export function HistoryScreen() {
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('dashboard.no_transactions')}</Text>
           </View>
         ) : (
-          <View style={styles.table}>
-            {/* Header */}
-            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1 }]}>{t('common.date')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('common.notes')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.category')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.account')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('common.amount')}</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1 }]}>Metode</Text>
-              <Text style={[styles.th, { color: colors.textSecondary, flex: 1 }]}>Staff</Text>
-              {isAdmin && <Text style={[styles.th, { color: colors.textSecondary, flex: 0.8, textAlign: 'center' }]}>{t('action.actions')}</Text>}
-            </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
+          >
+            <View style={[styles.table, { minWidth: 880 }]}>
+              {/* Header */}
+              <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.1 }]}>{t('common.date')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('common.notes')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.category')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.account')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('common.amount')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.3 }]}>{t('common.payment_method')}</Text>
+                <Text style={[styles.th, { color: colors.textSecondary, flex: 1.1 }]}>Staff</Text>
+                {isAdmin && <Text style={[styles.th, { color: colors.textSecondary, flex: 0.8, textAlign: 'center' }]}>{t('action.actions')}</Text>}
+              </View>
 
-            {/* Rows */}
-            {transactions.map((tx) => {
-              const isIn = tx.type === 'cash_in';
-              return (
-                <View key={tx.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
-                  <View style={[styles.td, { flex: 1 }]}>
-                    <Text style={[styles.tdDate, { color: colors.textSecondary }]}>
-                      {formatDate(tx.date, { day: 'numeric', month: 'short' })}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.td, { flex: 2 }]}>
-                    <Text style={[styles.tdDesc, { color: colors.textPrimary }]} numberOfLines={2}>
-                      {tx.description || (isIn ? t('nav.cash_in') : t('nav.cash_out'))}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.td, { flex: 1.2 }]}>
-                    <Badge
-                      label={tx.category?.name || t('common.all')}
-                      variant={isIn ? 'cash_in' : 'cash_out'}
-                      size="sm"
-                    />
-                  </View>
-
-                  <View style={[styles.td, { flex: 1.2 }]}>
-                    <Text style={[styles.tdAccount, { color: colors.textSecondary }]}>{tx.account?.name || '-'}</Text>
-                  </View>
-
-                  <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
-                    <Text
-                      style={[
-                        styles.tdAmount,
-                        { color: isIn ? colors.cashIn : colors.cashOut },
-                      ]}
-                    >
-                      {isIn ? '+' : '-'}{formatCurrency(tx.amount)}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.td, { flex: 1 }]}>
-                    <Text style={[styles.tdMethod, { color: colors.textMuted }]}>{tx.payment_method}</Text>
-                  </View>
-
-                  <View style={[styles.td, { flex: 1 }]}>
-                    <Text style={[styles.tdCreator, { color: colors.textLight }]}>{tx.creator?.name || 'Sistem'}</Text>
-                  </View>
-
-                  {isAdmin && (
-                    <View style={[styles.td, { flex: 0.8, alignItems: 'center' }]}>
-                      <TouchableOpacity
-                        style={[styles.deleteBtn, { backgroundColor: colors.cashOutBg, borderColor: colors.cashOutBorder }]}
-                        onPress={() => handleDelete(tx)}
-                        title={t('action.delete')}
-                      >
-                        <Feather name="trash-2" size={12} color={colors.cashOut} />
-                      </TouchableOpacity>
+              {/* Rows */}
+              {transactions.map((tx) => {
+                const isIn = tx.type === 'cash_in';
+                return (
+                  <View key={tx.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
+                    <View style={[styles.td, { flex: 1.1 }]}>
+                      <Text style={[styles.tdDate, { color: colors.textSecondary }]}>
+                        {formatDate(tx.date, { day: 'numeric', month: 'short' })}
+                      </Text>
                     </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
+
+                    <View style={[styles.td, { flex: 2 }]}>
+                      <Text style={[styles.tdDesc, { color: colors.textPrimary }]} numberOfLines={2}>
+                        {tx.description || (isIn ? t('nav.cash_in') : t('nav.cash_out'))}
+                      </Text>
+                    </View>
+
+                    <View style={[styles.td, { flex: 1.2 }]}>
+                      <Badge
+                        label={getLocalizedName(tx.category) || t('common.all')}
+                        variant={isIn ? 'cash_in' : 'cash_out'}
+                        size="sm"
+                      />
+                    </View>
+
+                    <View style={[styles.td, { flex: 1.2 }]}>
+                      <Text style={[styles.tdAccount, { color: colors.textSecondary }]} numberOfLines={1}>{getLocalizedName(tx.account) || '-'}</Text>
+                    </View>
+
+                    <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
+                      <Text
+                        style={[
+                          styles.tdAmount,
+                          { color: isIn ? colors.cashIn : colors.cashOut },
+                        ]}
+                      >
+                        {isIn ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </Text>
+                    </View>
+
+                    <View style={[styles.td, { flex: 1.3 }]}>
+                      <Text style={[styles.tdMethod, { color: colors.textMuted }]}>
+                        {tx.payment_method === 'Transfer Bank' ? t('payment.transfer_bank') :
+                         tx.payment_method === 'Tunai' ? t('payment.cash') :
+                         tx.payment_method === 'QRIS' ? t('payment.qris') :
+                         tx.payment_method === 'Kartu Debit' ? t('payment.debit') :
+                         tx.payment_method === 'Giro' ? t('payment.giro') :
+                         tx.payment_method === 'Lainnya' ? t('payment.other') : tx.payment_method}
+                      </Text>
+                    </View>
+
+                    <View style={[styles.td, { flex: 1.1 }]}>
+                      <Text style={[styles.tdCreator, { color: colors.textLight }]}>{tx.creator?.name || 'Sistem'}</Text>
+                    </View>
+
+                    {isAdmin && (
+                      <View style={[styles.td, { flex: 0.8, alignItems: 'center' }]}>
+                        <TouchableOpacity
+                          style={[styles.deleteBtn, { backgroundColor: colors.cashOutBg, borderColor: colors.cashOutBorder }]}
+                          onPress={() => handleDelete(tx)}
+                          title={t('action.delete')}
+                        >
+                          <Feather name="trash-2" size={12} color={colors.cashOut} />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
         )}
       </Card>
     </ScrollView>
@@ -252,32 +282,44 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 28,
   },
+  containerMobile: {
+    padding: 14,
+  },
   summaryRow: {
+    width: '100%',
+    minWidth: 640,
     flexDirection: 'row',
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
     alignItems: 'center',
+    justifyContent: 'space-between',
     ...theme.shadows.sm,
+  },
+  summaryRowMobile: {
+    minWidth: 560,
   },
   summaryItem: {
     flex: 1,
+    paddingHorizontal: 12,
     alignItems: 'center',
+    minWidth: 130,
   },
   summaryDivider: {
     width: 1,
-    height: 32,
+    height: 34,
   },
   summaryLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   summaryValue: {
     fontSize: 16,
     fontWeight: '800',
+    textAlign: 'center',
   },
   filterBar: {
     flexDirection: 'row',
@@ -294,6 +336,7 @@ const styles = StyleSheet.create({
   chipsRow: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   filterChip: {
     flexDirection: 'row',
@@ -328,7 +371,7 @@ const styles = StyleSheet.create({
   tableHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
@@ -336,16 +379,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
+    paddingHorizontal: 8,
   },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderBottomWidth: 1,
   },
   td: {
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   tdDate: {
     fontSize: 12,

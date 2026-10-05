@@ -15,6 +15,8 @@ class StoreCategoryRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:100',
+            'name_en' => 'nullable|string|max:100',
+            'name_ja' => 'nullable|string|max:100',
             'type' => 'required|in:cash_in,cash_out',
             'description' => 'nullable|string',
         ];

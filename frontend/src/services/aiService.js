@@ -1,12 +1,13 @@
 import { request, API_BASE } from './apiClient';
 
 export const aiService = {
-  async chat(message, history = []) {
+  async chat(message, history = [], language = 'id') {
     return await request(`${API_BASE}/ai/chat`, {
       method: 'POST',
       body: JSON.stringify({
         message,
         history,
+        language,
       }),
     });
   },

@@ -48,6 +48,8 @@ class AccountController extends Controller
             return [
                 'id' => $acc->id,
                 'name' => $acc->name,
+                'name_en' => $acc->name_en,
+                'name_ja' => $acc->name_ja,
                 'account_number' => $acc->account_number,
                 'initial_balance' => (float) $acc->initial_balance,
                 'initial_balance_formatted' => 'Rp ' . number_format($acc->initial_balance, 0, ',', '.'),
@@ -80,6 +82,8 @@ class AccountController extends Controller
 
         $account = Account::create([
             'name' => $validated['name'],
+            'name_en' => $validated['name_en'] ?? null,
+            'name_ja' => $validated['name_ja'] ?? null,
             'account_number' => $validated['account_number'] ?? null,
             'initial_balance' => $validated['initial_balance'] ?? 0,
             'description' => $validated['description'] ?? null,
@@ -91,6 +95,8 @@ class AccountController extends Controller
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'name_en' => $account->name_en,
+                'name_ja' => $account->name_ja,
                 'account_number' => $account->account_number,
                 'initial_balance' => (float) $account->initial_balance,
                 'current_balance' => (float) $account->initial_balance,
@@ -126,6 +132,12 @@ class AccountController extends Controller
         }
 
         $account->name = $validated['name'];
+        if (array_key_exists('name_en', $validated)) {
+            $account->name_en = $validated['name_en'];
+        }
+        if (array_key_exists('name_ja', $validated)) {
+            $account->name_ja = $validated['name_ja'];
+        }
         $account->account_number = $validated['account_number'] ?? null;
         $account->description = $validated['description'] ?? null;
         $account->save();
@@ -137,6 +149,8 @@ class AccountController extends Controller
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,
+                'name_en' => $account->name_en,
+                'name_ja' => $account->name_ja,
                 'account_number' => $account->account_number,
                 'initial_balance' => (float) $account->initial_balance,
                 'current_balance' => $balance,
