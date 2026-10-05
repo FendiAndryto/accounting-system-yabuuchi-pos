@@ -7,14 +7,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { colors, theme } from '../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { Badge } from '../components/common/Badge';
 import { FormInput } from '../components/common/FormInput';
 
 export function CashInScreen({ onTransactionAdded }) {
+  const { colors } = useTheme();
+  const { t, formatCurrency, formatDate } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [accounts, setAccounts] = useState([]);
@@ -89,7 +93,7 @@ export function CashInScreen({ onTransactionAdded }) {
         description: description.trim() || null,
       });
 
-      setSuccessMsg('✓ Kas masuk berhasil dicatat ke sistem!');
+      setSuccessMsg(t('form.success_in'));
       setAmount('');
       setDescription('');
 
@@ -107,19 +111,19 @@ export function CashInScreen({ onTransactionAdded }) {
   const paymentMethods = ['Transfer Bank', 'Tunai', 'QRIS', 'Giro', 'Lainnya'];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.layoutRow}>
         {/* Form Column */}
         <View style={styles.formCol}>
           <Card
-            title="Catat Pemasukan Kas (Cash In)"
-            subtitle="Entri penerimaan kas operasional atau pendapatan"
+            title={t('screen.cash_in.title')}
+            subtitle={t('screen.cash_in.subtitle')}
           >
-            {errorMsg ? <Text style={styles.alertError}>⚠ {errorMsg}</Text> : null}
-            {successMsg ? <Text style={styles.alertSuccess}>{successMsg}</Text> : null}
+            {errorMsg ? <Text style={[styles.alertError, { backgroundColor: colors.cashOutBg, color: colors.cashOut }]}>⚠ {errorMsg}</Text> : null}
+            {successMsg ? <Text style={[styles.alertSuccess, { backgroundColor: colors.cashInBg, color: colors.cashIn }]}>{successMsg}</Text> : null}
 
             <FormInput
-              label="Tanggal Penerimaan"
+              label={t('common.date')}
               value={date}
               onChangeText={setDate}
               placeholder="YYYY-MM-DD"
@@ -127,34 +131,46 @@ export function CashInScreen({ onTransactionAdded }) {
             />
 
             <FormInput
-              label="Nominal Pemasukan (Rp)"
+              label={t('form.enter_amount')}
               value={amount}
               onChangeText={setAmount}
-              placeholder="Contoh: 5000000"
+              placeholder="5000000"
               keyboardType="numeric"
               required
+              helperText={t('common.rate_info')}
             />
 
             {/* Rekening Tujuan Selector */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Rekening Tujuan Kas *</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('common.account')} *</Text>
               <View style={styles.optionsWrap}>
                 {accounts.map((acc) => (
                   <TouchableOpacity
                     key={acc.id}
                     style={[
                       styles.optionChip,
-                      String(acc.id) === String(accountId) && styles.optionChipActive,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      String(acc.id) === String(accountId) && {
+                        backgroundColor: colors.cashInBg,
+                        borderColor: colors.cashInBorder,
+                      },
                     ]}
                     onPress={() => setAccountId(String(acc.id))}
                   >
+                    <Feather
+                      name="credit-card"
+                      size={12}
+                      color={String(acc.id) === String(accountId) ? colors.cashIn : colors.textSecondary}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text
                       style={[
                         styles.optionChipText,
-                        String(acc.id) === String(accountId) && styles.optionChipTextActive,
+                        { color: colors.textSecondary },
+                        String(acc.id) === String(accountId) && { color: colors.cashIn, fontWeight: '700' },
                       ]}
                     >
-                      🏦 {acc.name}
+                      {acc.name}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -163,24 +179,35 @@ export function CashInScreen({ onTransactionAdded }) {
 
             {/* Kategori Pemasukan Selector */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Kategori Pemasukan *</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('common.category')} *</Text>
               <View style={styles.optionsWrap}>
                 {categories.map((cat) => (
                   <TouchableOpacity
                     key={cat.id}
                     style={[
                       styles.optionChip,
-                      String(cat.id) === String(categoryId) && styles.optionChipActive,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      String(cat.id) === String(categoryId) && {
+                        backgroundColor: colors.cashInBg,
+                        borderColor: colors.cashInBorder,
+                      },
                     ]}
                     onPress={() => setCategoryId(String(cat.id))}
                   >
+                    <Feather
+                      name="tag"
+                      size={12}
+                      color={String(cat.id) === String(categoryId) ? colors.cashIn : colors.textSecondary}
+                      style={{ marginRight: 6 }}
+                    />
                     <Text
                       style={[
                         styles.optionChipText,
-                        String(cat.id) === String(categoryId) && styles.optionChipTextActive,
+                        { color: colors.textSecondary },
+                        String(cat.id) === String(categoryId) && { color: colors.cashIn, fontWeight: '700' },
                       ]}
                     >
-                      🏷️ {cat.name}
+                      {cat.name}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -189,21 +216,26 @@ export function CashInScreen({ onTransactionAdded }) {
 
             {/* Metode Pembayaran */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Metode Pembayaran</Text>
+              <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>Metode Pembayaran</Text>
               <View style={styles.optionsWrap}>
                 {paymentMethods.map((m) => (
                   <TouchableOpacity
                     key={m}
                     style={[
                       styles.optionChip,
-                      paymentMethod === m && styles.optionChipActive,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      paymentMethod === m && {
+                        backgroundColor: colors.primarySubtle,
+                        borderColor: colors.primaryLight,
+                      },
                     ]}
                     onPress={() => setPaymentMethod(m)}
                   >
                     <Text
                       style={[
                         styles.optionChipText,
-                        paymentMethod === m && styles.optionChipTextActive,
+                        { color: colors.textSecondary },
+                        paymentMethod === m && { color: colors.primary, fontWeight: '700' },
                       ]}
                     >
                       {m}
@@ -214,8 +246,8 @@ export function CashInScreen({ onTransactionAdded }) {
             </View>
 
             <FormInput
-              label="Keterangan / Memo Transaksi"
-              placeholder="Contoh: Pembayaran invoice PT Surya Jaya termin 1"
+              label={t('common.notes')}
+              placeholder={t('form.notes_placeholder')}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -223,12 +255,12 @@ export function CashInScreen({ onTransactionAdded }) {
             />
 
             <Button
-              title={submitting ? 'Memproses...' : 'Catat Kas Masuk'}
+              title={submitting ? t('action.refreshing') : t('form.submit_in')}
               onPress={handleSubmit}
               loading={submitting}
               variant="success"
               size="lg"
-              icon="↓"
+              icon={<Feather name="arrow-down-left" size={15} color="#ffffff" />}
             />
           </Card>
         </View>
@@ -236,29 +268,29 @@ export function CashInScreen({ onTransactionAdded }) {
         {/* Recent Transactions Column */}
         <View style={styles.recentCol}>
           <Card
-            title="Kas Masuk Terbaru"
-            subtitle="Penerimaan kas yang baru saja dicatat"
+            title={t('nav.cash_in')}
+            subtitle={t('dashboard.recent_transactions')}
           >
             {loading ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : recentCashIns.length === 0 ? (
-              <Text style={styles.emptyText}>Belum ada penerimaan kas tercatat.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('dashboard.no_transactions')}</Text>
             ) : (
               recentCashIns.map((tx) => (
-                <View key={tx.id} style={styles.recentRow}>
-                  <View style={styles.recentIndicator}>
-                    <Text style={styles.recentIndicatorText}>↓</Text>
+                <View key={tx.id} style={[styles.recentRow, { borderBottomColor: colors.borderLight }]}>
+                  <View style={[styles.recentIndicator, { backgroundColor: colors.cashInBg }]}>
+                    <Feather name="arrow-down-left" size={13} color={colors.cashIn} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.recentDesc} numberOfLines={1}>
-                      {tx.description || 'Penerimaan Kas'}
+                    <Text style={[styles.recentDesc, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {tx.description || t('nav.cash_in')}
                     </Text>
-                    <Text style={styles.recentMeta}>
-                      {tx.category?.name} • {tx.account?.name} • {tx.date}
+                    <Text style={[styles.recentMeta, { color: colors.textMuted }]}>
+                      {tx.category?.name} • {tx.account?.name} • {formatDate(tx.date, { day: 'numeric', month: 'short' })}
                     </Text>
                   </View>
-                  <Text style={styles.recentAmount}>
-                    +Rp {Number(tx.amount).toLocaleString('id-ID')}
+                  <Text style={[styles.recentAmount, { color: colors.cashIn }]}>
+                    +{formatCurrency(tx.amount)}
                   </Text>
                 </View>
               ))
@@ -289,8 +321,6 @@ const styles = StyleSheet.create({
     minWidth: 300,
   },
   alertError: {
-    backgroundColor: colors.cashOutBg,
-    color: colors.cashOut,
     padding: 12,
     borderRadius: theme.borderRadius.md,
     marginBottom: 14,
@@ -298,8 +328,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   alertSuccess: {
-    backgroundColor: colors.cashInBg,
-    color: colors.cashIn,
     padding: 12,
     borderRadius: theme.borderRadius.md,
     marginBottom: 14,
@@ -312,7 +340,6 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: 8,
   },
   optionsWrap: {
@@ -321,29 +348,19 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   optionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  optionChipActive: {
-    backgroundColor: colors.cashInBg,
-    borderColor: colors.cashInBorder,
   },
   optionChipText: {
     fontSize: 12,
     fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  optionChipTextActive: {
-    color: colors.cashIn,
-    fontWeight: '700',
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textMuted,
     padding: 16,
     textAlign: 'center',
   },
@@ -352,35 +369,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   recentIndicator: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: colors.cashInBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  recentIndicatorText: {
-    color: colors.cashIn,
-    fontWeight: '800',
-  },
   recentDesc: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   recentMeta: {
     fontSize: 11,
-    color: colors.textMuted,
     marginTop: 2,
   },
   recentAmount: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.cashIn,
     marginLeft: 8,
   },
 });

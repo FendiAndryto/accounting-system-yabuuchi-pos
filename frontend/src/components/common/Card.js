@@ -1,15 +1,27 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 
 export function Card({ title, subtitle, headerRight, children, style, bodyStyle }) {
+  const { colors } = useTheme();
+
   return (
-    <View style={[styles.card, style]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+        style,
+      ]}
+    >
       {(title || subtitle || headerRight) && (
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
           <View style={{ flex: 1 }}>
-            {title && <Text style={styles.title}>{title}</Text>}
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            {title && <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>}
+            {subtitle && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
           </View>
           {headerRight && <View style={styles.headerRight}>{headerRight}</View>}
         </View>
@@ -21,10 +33,8 @@ export function Card({ title, subtitle, headerRight, children, style, bodyStyle 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     marginBottom: 16,
     ...theme.shadows.sm,
     overflow: 'hidden',
@@ -34,7 +44,6 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -42,12 +51,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: colors.textPrimary,
     letterSpacing: -0.2,
   },
   subtitle: {
     fontSize: 13,
-    color: colors.textMuted,
     marginTop: 2,
   },
   headerRight: {

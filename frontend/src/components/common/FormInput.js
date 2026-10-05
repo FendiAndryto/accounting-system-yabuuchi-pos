@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { colors, theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 
 export function FormInput({
   label,
@@ -17,13 +18,15 @@ export function FormInput({
   style,
   inputStyle,
 }) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
       {label ? (
         <View style={styles.labelRow}>
-          <Text style={styles.label}>
+          <Text style={[styles.label, { color: colors.textPrimary }]}>
             {label}
-            {required && <Text style={styles.asterisk}> *</Text>}
+            {required && <Text style={[styles.asterisk, { color: colors.cashOut }]}> *</Text>}
           </Text>
         </View>
       ) : null}
@@ -31,8 +34,13 @@ export function FormInput({
       <TextInput
         style={[
           styles.input,
+          {
+            backgroundColor: colors.surface,
+            borderColor: error ? colors.cashOut : colors.border,
+            color: colors.textPrimary,
+          },
           multiline && { height: 24 * numberOfLines + 16, textAlignVertical: 'top' },
-          error && styles.inputError,
+          error && { backgroundColor: colors.cashOutBg },
           inputStyle,
         ]}
         value={value}
@@ -46,9 +54,9 @@ export function FormInput({
       />
 
       {error ? (
-        <Text style={styles.errorText}>⚠ {error}</Text>
+        <Text style={[styles.errorText, { color: colors.cashOut }]}>⚠ {error}</Text>
       ) : helperText ? (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={[styles.helperText, { color: colors.textMuted }]}>{helperText}</Text>
       ) : null}
     </View>
   );
@@ -66,34 +74,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
   },
   asterisk: {
-    color: colors.cashOut,
+    fontWeight: '700',
   },
   input: {
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: colors.textPrimary,
-  },
-  inputError: {
-    borderColor: colors.cashOut,
-    backgroundColor: colors.cashOutBg,
   },
   errorText: {
     fontSize: 12,
-    color: colors.cashOut,
     marginTop: 4,
     fontWeight: '500',
   },
   helperText: {
     fontSize: 12,
-    color: colors.textMuted,
     marginTop: 4,
   },
 });

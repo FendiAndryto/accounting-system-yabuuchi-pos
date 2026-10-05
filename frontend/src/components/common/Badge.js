@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export function Badge({ label, variant = 'default', size = 'md' }) {
+  const { colors } = useTheme();
+
   const getStyles = () => {
     switch (variant) {
       case 'success':

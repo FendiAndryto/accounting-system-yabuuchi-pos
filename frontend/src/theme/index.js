@@ -1,4 +1,4 @@
-export const colors = {
+export const lightColors = {
   primary: '#2563eb',          // Clean Corporate Blue (accent)
   primaryHover: '#1d4ed8',     // Deep Blue hover/active
   primaryLight: '#dbeafe',     // Soft Blue border/tint
@@ -44,8 +44,60 @@ export const colors = {
   sidebarItemActiveBg: '#eff6ff',
 };
 
+export const darkColors = {
+  primary: '#3b82f6',          // Vibrant Blue for dark background
+  primaryHover: '#60a5fa',
+  primaryLight: '#1e3a8a',
+  primarySubtle: '#172554',
+  primaryActive: '#93c5fd',
+
+  background: '#0f172a',       // Slate 900 Deep Slate / Navy
+  surface: '#1e293b',          // Slate 800 Card surfaces
+  surfaceSecondary: '#334155', // Slate 700 Muted containers
+  surfaceHover: '#273549',
+
+  border: '#334155',           // Slate 700 Borders
+  borderLight: '#1e293b',      // Slate 800
+  borderFocus: '#60a5fa',
+
+  textPrimary: '#f8fafc',      // Slate 50 high contrast text
+  textSecondary: '#cbd5e1',    // Slate 300 readable secondary
+  textMuted: '#94a3b8',        // Slate 400 tags & hints
+  textLight: '#64748b',        // Slate 500
+
+  cashIn: '#10b981',           // Emerald 500
+  cashInLight: '#34d399',
+  cashInBg: '#064e3b',         // Dark Emerald
+  cashInBorder: '#065f46',
+
+  cashOut: '#f43f5e',          // Rose 500
+  cashOutLight: '#fb7185',
+  cashOutBg: '#881337',        // Dark Rose
+  cashOutBorder: '#9f1239',
+
+  warning: '#f59e0b',          // Amber 500
+  warningBg: '#78350f',
+  warningBorder: '#92400e',
+
+  indigo: '#818cf8',           // Indigo 400
+  indigoBg: '#312e81',
+  indigoBorder: '#4338ca',
+
+  sidebarBg: '#0f172a',        // Matches deep background
+  sidebarBorder: '#1e293b',
+  sidebarText: '#94a3b8',
+  sidebarTextActive: '#60a5fa',
+  sidebarItemActiveBg: '#1e293b',
+};
+
+export function getThemeColors(mode = 'light') {
+  return mode === 'dark' ? darkColors : lightColors;
+}
+
+export const colors = lightColors;
+
 export const theme = {
-  colors,
+  colors: lightColors,
   borderRadius: {
     xs: 4,
     sm: 6,

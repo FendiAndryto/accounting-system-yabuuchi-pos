@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,9 +7,12 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  Image,
+  Platform,
 } from 'react-native';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { colors } from './src/theme';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { Sidebar } from './src/components/Sidebar';
 import { Header } from './src/components/Header';
 import { FloatingAiAssistant } from './src/components/FloatingAiAssistant';
@@ -26,19 +29,39 @@ import { TeamScreen } from './src/screens/TeamScreen';
 
 function MainAppLayout() {
   const { isAuthenticated, authChecking, isAdmin } = useAuth();
+  const { isDark, colors } = useTheme();
+  const { t } = useLanguage();
   const [activeScreen, setActiveScreen] = useState('dashboard');
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Synchronize browser tab title and favicon when on web
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.title = 'Aube Terra Indonesia';
+      let link = document.querySelector("link[rel*='icon']");
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = '/assets/assets/favicon.png';
+    }
+  }, []);
+
   // If still checking local storage session
   if (authChecking) {
     return (
-      <View style={styles.splashContainer}>
-        <View style={styles.splashLogoBox}>
-          <Text style={styles.splashLogoText}>AT</Text>
+      <View style={[styles.splashContainer, { backgroundColor: colors.background }]}>
+        <View style={[styles.splashLogoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Image
+            source={require('./assets/logo.png')}
+            style={styles.splashLogoImage}
+            resizeMode="contain"
+          />
         </View>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.splashText}>Memuat sistem akuntansi AUBE TERRA...</Text>
+        <Text style={[styles.splashText, { color: colors.textSecondary }]}>{t('app.loading')}</Text>
       </View>
     );
   }
@@ -48,46 +71,46 @@ function MainAppLayout() {
     return <LoginScreen />;
   }
 
-  // Screen header configuration
+  // Screen header configuration using dynamic translation
   const getScreenMeta = () => {
     switch (activeScreen) {
       case 'dashboard':
         return {
-          title: 'Dashboard Keuangan',
-          subtitle: 'Ringkasan posisi arus kas, rekening aktif, dan aktivitas terkini',
+          title: t('screen.dashboard.title'),
+          subtitle: t('screen.dashboard.subtitle'),
         };
       case 'master_accounts':
         return {
-          title: 'Master Rekening Kas & Bank',
-          subtitle: 'Manajemen akun bank dan kas operasional perusahaan',
+          title: t('screen.master_accounts.title'),
+          subtitle: t('screen.master_accounts.subtitle'),
         };
       case 'master_categories':
         return {
-          title: 'Master Kategori Kas',
-          subtitle: 'Klasifikasi pos pemasukan dan pengeluaran kas',
+          title: t('screen.master_categories.title'),
+          subtitle: t('screen.master_categories.subtitle'),
         };
       case 'cash_in':
         return {
-          title: 'Pencatatan Kas Masuk (Cash In)',
-          subtitle: 'Formulir entri penerimaan kas operasional dan pendapatan',
+          title: t('screen.cash_in.title'),
+          subtitle: t('screen.cash_in.subtitle'),
         };
       case 'cash_out':
         return {
-          title: 'Pencatatan Kas Keluar (Cash Out)',
-          subtitle: 'Formulir entri beban biaya, pengeluaran vendor, dan operasional',
+          title: t('screen.cash_out.title'),
+          subtitle: t('screen.cash_out.subtitle'),
         };
       case 'history':
         return {
-          title: 'Buku Besar & Riwayat Transaksi',
-          subtitle: 'Laporan audit transaksi kas masuk dan kas keluar lengkap',
+          title: t('screen.history.title'),
+          subtitle: t('screen.history.subtitle'),
         };
       case 'team':
         return {
-          title: 'Manajemen Tim & Pengguna',
-          subtitle: 'Pengaturan akun staf akuntansi dan hak akses administrator',
+          title: t('screen.team.title'),
+          subtitle: t('screen.team.subtitle'),
         };
       default:
-        return { title: 'AUBE TERRA', subtitle: 'Sistem Informasi Akuntansi' };
+        return { title: t('app.title'), subtitle: t('app.subtitle') };
     }
   };
 
@@ -135,14 +158,17 @@ function MainAppLayout() {
   };
 
   return (
-    <SafeAreaView style={styles.appContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <SafeAreaView style={[styles.appContainer, { backgroundColor: colors.background }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.surface}
+      />
       <View style={styles.workspaceRow}>
         {/* Left Sidebar */}
         <Sidebar activeScreen={activeScreen} onSelectScreen={setActiveScreen} />
 
         {/* Right Main Content Workspace */}
-        <View style={styles.mainWorkspace}>
+        <View style={[styles.mainWorkspace, { backgroundColor: colors.background }]}>
           <Header
             title={currentMeta.title}
             subtitle={currentMeta.subtitle}
@@ -150,7 +176,7 @@ function MainAppLayout() {
             refreshing={refreshing}
           />
 
-          <View style={styles.screenContentArea}>
+          <View style={[styles.screenContentArea, { backgroundColor: colors.background }]}>
             {renderActiveScreen()}
           </View>
 
@@ -200,9 +226,13 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <MainAppLayout />
-      </AuthProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <MainAppLayout />
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
@@ -210,7 +240,6 @@ export default function App() {
 const styles = StyleSheet.create({
   appContainer: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   workspaceRow: {
     flex: 1,
@@ -219,7 +248,6 @@ const styles = StyleSheet.create({
   },
   mainWorkspace: {
     flex: 1,
-    backgroundColor: colors.background,
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',
@@ -227,33 +255,29 @@ const styles = StyleSheet.create({
   },
   screenContentArea: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   splashContainer: {
     flex: 1,
-    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   splashLogoBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
+    width: 76,
+    height: 76,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
+    borderWidth: 1,
   },
-  splashLogoText: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '800',
+  splashLogoImage: {
+    width: 58,
+    height: 58,
   },
   splashText: {
     marginTop: 14,
     fontSize: 14,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   errorBoundaryContainer: {
@@ -277,7 +301,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
   },
   errorBoundaryBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#2563eb',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

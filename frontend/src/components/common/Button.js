@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { colors, theme } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 
 export function Button({
   title,
@@ -13,6 +14,8 @@ export function Button({
   textStyle,
   icon,
 }) {
+  const { colors } = useTheme();
+
   const getVariantStyle = () => {
     switch (variant) {
       case 'secondary':

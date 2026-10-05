@@ -6,9 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
-import { colors, theme } from '../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -17,6 +19,8 @@ import { Modal } from '../components/common/Modal';
 import { FormInput } from '../components/common/FormInput';
 
 export function MasterBankAccountsScreen() {
+  const { colors } = useTheme();
+  const { t, formatCurrency } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [search, setSearch] = useState('');
@@ -127,7 +131,7 @@ export function MasterBankAccountsScreen() {
   };
 
   const handleDelete = async (acc) => {
-    const confirmed = window.confirm
+    const confirmed = typeof window !== 'undefined' && window.confirm
       ? window.confirm(`Apakah Anda yakin ingin menghapus rekening "${acc.name}"?`)
       : true;
 
@@ -142,12 +146,12 @@ export function MasterBankAccountsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       {/* Top Action Bar */}
       <View style={styles.actionBar}>
         <View style={styles.searchBox}>
           <FormInput
-            placeholder="Cari rekening atau no. akun..."
+            placeholder={t('action.search')}
             value={search}
             onChangeText={setSearch}
             style={{ marginBottom: 0 }}
@@ -155,71 +159,71 @@ export function MasterBankAccountsScreen() {
         </View>
 
         <Button
-          title="+ Tambah Rekening"
+          title={t('master.add_account')}
           onPress={handleOpenAdd}
-          icon="🏦"
+          icon={<Feather name="plus" size={15} color="#ffffff" />}
           size="md"
         />
       </View>
 
       {/* Accounts List Card */}
       <Card
-        title="Daftar Rekening Bank & Kas"
-        subtitle="Kelola rekening dan kas operasional AUBE TERRA"
+        title={t('screen.master_accounts.title')}
+        subtitle={t('screen.master_accounts.subtitle')}
       >
         {loading ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Memuat rekening...</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('action.refreshing')}</Text>
           </View>
         ) : accounts.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Tidak ada data rekening ditemukan.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
           <View style={styles.table}>
             {/* Table Header */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2 }]}>Nama Rekening</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>Nomor Akun</Text>
-              <Text style={[styles.th, { flex: 1.5, textAlign: 'right' }]}>Saldo Awal</Text>
-              <Text style={[styles.th, { flex: 1.5, textAlign: 'right' }]}>Saldo Berjalan</Text>
-              <Text style={[styles.th, { flex: 1, textAlign: 'center' }]}>Status</Text>
-              <Text style={[styles.th, { flex: 1.5, textAlign: 'center' }]}>Aksi</Text>
+            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('master.bank_name')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.account_no')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('master.init_balance')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'right' }]}>{t('dashboard.total_balance')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
             </View>
 
             {/* Table Rows */}
             {accounts.map((acc) => (
-              <View key={acc.id} style={styles.tableRow}>
+              <View key={acc.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
                 <View style={[styles.td, { flex: 2 }]}>
-                  <Text style={styles.accName}>{acc.name}</Text>
+                  <Text style={[styles.accName, { color: colors.textPrimary }]}>{acc.name}</Text>
                   {acc.description ? (
-                    <Text style={styles.accDesc} numberOfLines={1}>
+                    <Text style={[styles.accDesc, { color: colors.textMuted }]} numberOfLines={1}>
                       {acc.description}
                     </Text>
                   ) : null}
                 </View>
 
                 <View style={[styles.td, { flex: 1.5 }]}>
-                  <Text style={styles.accNumber}>{acc.account_number || '-'}</Text>
-                  <Text style={styles.txCount}>{acc.transactions_count} transaksi</Text>
+                  <Text style={[styles.accNumber, { color: colors.textSecondary }]}>{acc.account_number || '-'}</Text>
+                  <Text style={[styles.txCount, { color: colors.textLight }]}>{acc.transactions_count} {t('nav.transactions').toLowerCase()}</Text>
                 </View>
 
                 <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
-                  <Text style={styles.balanceText}>
-                    Rp {Number(acc.initial_balance || 0).toLocaleString('id-ID')}
+                  <Text style={[styles.balanceText, { color: colors.textPrimary }]}>
+                    {formatCurrency(acc.initial_balance || 0)}
                   </Text>
                 </View>
 
                 <View style={[styles.td, { flex: 1.5, alignItems: 'flex-end' }]}>
                   <Text style={[styles.balanceText, { fontWeight: '700', color: colors.primary }]}>
-                    Rp {Number(acc.current_balance || 0).toLocaleString('id-ID')}
+                    {formatCurrency(acc.current_balance || 0)}
                   </Text>
                 </View>
 
                 <View style={[styles.td, { flex: 1, alignItems: 'center' }]}>
                   <Badge
-                    label={acc.is_active ? 'Aktif' : 'Nonaktif'}
+                    label={acc.is_active ? t('common.active') : t('common.inactive')}
                     variant={acc.is_active ? 'success' : 'neutral'}
                     size="sm"
                   />
@@ -227,11 +231,12 @@ export function MasterBankAccountsScreen() {
 
                 <View style={[styles.td, { flex: 1.5, flexDirection: 'row', justifyContent: 'center', gap: 6 }]}>
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     onPress={() => handleOpenEdit(acc)}
-                    title="Edit"
+                    title={t('action.edit')}
                   >
-                    <Text style={styles.actionBtnText}>✏ Edit</Text>
+                    <Feather name="edit-2" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                    <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('action.edit')}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -239,7 +244,7 @@ export function MasterBankAccountsScreen() {
                     onPress={() => handleToggleStatus(acc)}
                   >
                     <Text style={{ fontSize: 11, color: acc.is_active ? colors.warning : colors.cashIn, fontWeight: '600' }}>
-                      {acc.is_active ? 'Matikan' : 'Aktifkan'}
+                      {acc.is_active ? 'Off' : 'On'}
                     </Text>
                   </TouchableOpacity>
 
@@ -248,9 +253,7 @@ export function MasterBankAccountsScreen() {
                       style={[styles.actionBtn, { borderColor: colors.cashOutBorder }]}
                       onPress={() => handleDelete(acc)}
                     >
-                      <Text style={{ fontSize: 11, color: colors.cashOut, fontWeight: '600' }}>
-                        🗑
-                      </Text>
+                      <Feather name="trash-2" size={12} color={colors.cashOut} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -264,56 +267,56 @@ export function MasterBankAccountsScreen() {
       <Modal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Tambah Rekening Kas / Bank"
-        subtitle="Daftarkan akun rekening atau kas fisik baru"
+        title={t('master.add_account')}
+        subtitle={t('screen.master_accounts.subtitle')}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowAddModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Simpan Rekening'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveAdd}
               loading={submitting}
             />
           </>
         }
       >
-        {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
+        {formError ? <Text style={styles.modalError}>{formError}</Text> : null}
 
         <FormInput
-          label="Nama Rekening / Kas"
-          placeholder="Contoh: BCA Operasional, Kas Kecil Kantor"
+          label={t('master.bank_name')}
+          required
           value={formName}
           onChangeText={setFormName}
-          required
+          placeholder="e.g. BCA Operasional, Kas Kecil"
         />
 
         <FormInput
-          label="Nomor Rekening"
-          placeholder="Contoh: 8271928312 (Kosongkan bila Kas Tunai)"
+          label={t('master.account_no')}
           value={formAccountNumber}
           onChangeText={setFormAccountNumber}
+          placeholder="e.g. 1234567890"
         />
 
         <FormInput
-          label="Saldo Awal (Rp)"
-          placeholder="0"
+          label={t('master.init_balance')}
           value={formInitialBalance}
           onChangeText={setFormInitialBalance}
           keyboardType="numeric"
-          helperText="Saldo awal saat pertama kali dicatat ke sistem"
+          placeholder="0"
+          helperText="IDR basis"
         />
 
         <FormInput
-          label="Keterangan Tambahan"
-          placeholder="Keterangan fungsi rekening..."
+          label={t('common.notes')}
           value={formDesc}
           onChangeText={setFormDesc}
           multiline
           numberOfLines={2}
+          placeholder="Catatan..."
         />
       </Modal>
 
@@ -321,52 +324,47 @@ export function MasterBankAccountsScreen() {
       <Modal
         visible={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit Rekening Kas / Bank"
+        title={t('master.edit_account')}
         subtitle={selectedAccount?.name}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowEditModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Perbarui Rekening'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveEdit}
               loading={submitting}
             />
           </>
         }
       >
-        {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
+        {formError ? <Text style={styles.modalError}>{formError}</Text> : null}
 
         <FormInput
-          label="Nama Rekening / Kas"
+          label={t('master.bank_name')}
+          required
           value={formName}
           onChangeText={setFormName}
-          required
         />
 
         <FormInput
-          label="Nomor Rekening"
+          label={t('master.account_no')}
           value={formAccountNumber}
           onChangeText={setFormAccountNumber}
         />
 
         <FormInput
-          label="Saldo Awal (Rp)"
+          label={t('master.init_balance')}
           value={formInitialBalance}
           onChangeText={setFormInitialBalance}
           keyboardType="numeric"
-          helperText={
-            selectedAccount?.transactions_count > 0
-              ? 'Terkunci: Rekening sudah memiliki transaksi tercatat.'
-              : 'Dapat diubah selama belum memiliki transaksi.'
-          }
         />
 
         <FormInput
-          label="Keterangan"
+          label={t('common.notes')}
           value={formDesc}
           onChangeText={setFormDesc}
           multiline
@@ -399,7 +397,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 13,
-    color: colors.textMuted,
   },
   emptyContainer: {
     padding: 30,
@@ -407,7 +404,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textMuted,
   },
   table: {
     width: '100%',
@@ -416,14 +412,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
   th: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textSecondary,
     letterSpacing: 0.3,
   },
   tableRow: {
@@ -432,7 +426,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   td: {
     justifyContent: 'center',
@@ -440,44 +433,38 @@ const styles = StyleSheet.create({
   accName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   accDesc: {
     fontSize: 11,
-    color: colors.textMuted,
     marginTop: 2,
   },
   accNumber: {
     fontSize: 13,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   txCount: {
     fontSize: 11,
-    color: colors.textLight,
     marginTop: 1,
   },
   balanceText: {
     fontSize: 13,
-    color: colors.textPrimary,
   },
   actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   actionBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   modalError: {
     fontSize: 12,
-    color: colors.cashOut,
-    backgroundColor: colors.cashOutBg,
+    color: '#ef4444',
+    backgroundColor: '#fee2e2',
     padding: 10,
     borderRadius: theme.borderRadius.md,
     marginBottom: 12,

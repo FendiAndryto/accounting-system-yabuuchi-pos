@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { colors, theme } from '../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { theme } from '../theme';
 import { userService } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/common/Card';
@@ -18,6 +21,8 @@ import { FormInput } from '../components/common/FormInput';
 
 export function TeamScreen() {
   const { user: currentUser } = useAuth();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
@@ -151,52 +156,49 @@ export function TeamScreen() {
   };
 
   const handleToggleStatus = async (u) => {
-    if (u.id === currentUser?.id) {
-      alert('Anda tidak dapat menonaktifkan akun Anda sendiri.');
-      return;
-    }
-
     try {
-      await userService.toggleStatus(u.id);
+      await userService.toggleUserStatus(u.id);
       await loadUsers();
     } catch (e) {
-      alert(e.message || 'Gagal mengubah status aktif pengguna.');
+      alert(e.message || 'Gagal mengubah status pengguna.');
     }
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Top Filter and Action Bar */}
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      {/* Action and Filter Bar */}
       <View style={styles.actionBar}>
         <View style={styles.filterSection}>
           <View style={styles.searchBox}>
             <FormInput
-              placeholder="Cari nama atau email tim..."
+              placeholder={t('action.search')}
               value={search}
               onChangeText={setSearch}
               style={{ marginBottom: 0 }}
             />
           </View>
 
-          {/* Role Filter Chips */}
+          {/* Role Filters */}
           <View style={styles.chipsRow}>
             {[
-              { id: 'all', label: 'Semua Peran' },
-              { id: 'admin', label: 'Administrator' },
-              { id: 'staff', label: 'Staff Akuntansi' },
+              { id: 'all', label: t('common.all') },
+              { id: 'admin', label: t('common.admin') },
+              { id: 'staff', label: t('common.staff') },
             ].map((c) => (
               <TouchableOpacity
                 key={c.id}
                 style={[
                   styles.filterChip,
-                  roleFilter === c.id && styles.filterChipActive,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  roleFilter === c.id && { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight },
                 ]}
                 onPress={() => setRoleFilter(c.id)}
               >
                 <Text
                   style={[
                     styles.filterChipText,
-                    roleFilter === c.id && styles.filterChipTextActive,
+                    { color: colors.textSecondary },
+                    roleFilter === c.id && { color: colors.primary, fontWeight: '700' },
                   ]}
                 >
                   {c.label}
@@ -207,75 +209,75 @@ export function TeamScreen() {
         </View>
 
         <Button
-          title="+ Tambah Anggota"
+          title={t('nav.team')}
           onPress={handleOpenAdd}
-          icon="👥"
+          icon={<Feather name="users" size={14} color="#ffffff" />}
           size="md"
         />
       </View>
 
       {/* Users Table Card */}
       <Card
-        title="Daftar Pengguna & Staf"
-        subtitle="Kelola akses dan akun staf akuntansi AUBE TERRA"
+        title={t('screen.team.title')}
+        subtitle={t('screen.team.subtitle')}
       >
         {loading ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Memuat anggota tim...</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('action.refreshing')}</Text>
           </View>
         ) : users.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Tidak ada pengguna ditemukan.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
           <View style={styles.table}>
             {/* Header */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2 }]}>Nama & Email</Text>
-              <Text style={[styles.th, { flex: 1.2 }]}>Peran Akun</Text>
-              <Text style={[styles.th, { flex: 1.2 }]}>Transaksi Dibuat</Text>
-              <Text style={[styles.th, { flex: 1, textAlign: 'center' }]}>Status</Text>
-              <Text style={[styles.th, { flex: 1.8, textAlign: 'center' }]}>Aksi</Text>
+            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('common.user')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('common.role')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.2 }]}>{t('nav.transactions')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.8, textAlign: 'center' }]}>{t('action.actions')}</Text>
             </View>
 
             {/* Rows */}
             {users.map((u) => {
               const isSelf = u.id === currentUser?.id;
               return (
-                <View key={u.id} style={styles.tableRow}>
+                <View key={u.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
                   <View style={[styles.td, { flex: 2, flexDirection: 'row', alignItems: 'center' }]}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>
+                    <View style={[styles.avatar, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight }]}>
+                      <Text style={[styles.avatarText, { color: colors.primary }]}>
                         {u.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <View>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.userName}>{u.name}</Text>
+                        <Text style={[styles.userName, { color: colors.textPrimary }]}>{u.name}</Text>
                         {isSelf && (
-                          <Text style={styles.selfTag}>(Anda)</Text>
+                          <Text style={[styles.selfTag, { color: colors.primary }]}>({t('common.user')})</Text>
                         )}
                       </View>
-                      <Text style={styles.userEmail}>{u.email}</Text>
+                      <Text style={[styles.userEmail, { color: colors.textMuted }]}>{u.email}</Text>
                     </View>
                   </View>
 
                   <View style={[styles.td, { flex: 1.2 }]}>
                     <Badge
-                      label={u.role === 'admin' ? 'Administrator' : 'Staff'}
+                      label={u.role === 'admin' ? t('common.admin') : t('common.staff')}
                       variant={u.role === 'admin' ? 'admin' : 'staff'}
                       size="sm"
                     />
                   </View>
 
                   <View style={[styles.td, { flex: 1.2 }]}>
-                    <Text style={styles.txCountText}>{u.transactions_count || 0} entri</Text>
+                    <Text style={[styles.txCountText, { color: colors.textSecondary }]}>{u.transactions_count || 0} entri</Text>
                   </View>
 
                   <View style={[styles.td, { flex: 1, alignItems: 'center' }]}>
                     <Badge
-                      label={u.is_active ? 'Aktif' : 'Nonaktif'}
+                      label={u.is_active ? t('common.active') : t('common.inactive')}
                       variant={u.is_active ? 'success' : 'neutral'}
                       size="sm"
                     />
@@ -288,17 +290,19 @@ export function TeamScreen() {
                     ]}
                   >
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
                       onPress={() => handleOpenEdit(u)}
                     >
-                      <Text style={styles.actionBtnText}>✏ Edit</Text>
+                      <Feather name="edit-2" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('action.edit')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
                       onPress={() => handleOpenReset(u)}
                     >
-                      <Text style={styles.actionBtnText}>🔑 Reset</Text>
+                      <Feather name="key" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>Reset</Text>
                     </TouchableOpacity>
 
                     {!isSelf && (
@@ -320,7 +324,7 @@ export function TeamScreen() {
                             fontWeight: '600',
                           }}
                         >
-                          {u.is_active ? 'Matikan' : 'Aktifkan'}
+                          {u.is_active ? 'Off' : 'On'}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -336,17 +340,17 @@ export function TeamScreen() {
       <Modal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Tambah Akun Tim Baru"
-        subtitle="Berikan akses staf akuntansi atau administrator baru"
+        title={t('nav.team')}
+        subtitle={t('screen.team.subtitle')}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowAddModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Buat Akun'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveAdd}
               loading={submitting}
             />
@@ -356,16 +360,16 @@ export function TeamScreen() {
         {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
 
         <FormInput
-          label="Nama Lengkap"
-          placeholder="Contoh: Rian Anggara"
+          label={t('common.user')}
+          placeholder="e.g. John Doe"
           value={formName}
           onChangeText={setFormName}
           required
         />
 
         <FormInput
-          label="Alamat Email"
-          placeholder="rian@aubeterra.com"
+          label="Email"
+          placeholder="user@aubeterra.id"
           value={formEmail}
           onChangeText={setFormEmail}
           keyboardType="email-address"
@@ -373,7 +377,7 @@ export function TeamScreen() {
         />
 
         <FormInput
-          label="Kata Sandi Awal"
+          label="Password"
           placeholder="Minimal 6 karakter"
           value={formPassword}
           onChangeText={setFormPassword}
@@ -382,45 +386,49 @@ export function TeamScreen() {
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Peran Akses (Role) *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('common.role')} *</Text>
           <View style={styles.roleSelectorRow}>
             <TouchableOpacity
               style={[
                 styles.roleOption,
-                formRole === 'staff' && styles.roleOptionActive,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formRole === 'staff' && { backgroundColor: colors.primarySubtle, borderColor: colors.primary },
               ]}
               onPress={() => setFormRole('staff')}
             >
               <Text
                 style={[
                   styles.roleOptionTitle,
-                  formRole === 'staff' && styles.roleOptionTitleActive,
+                  { color: colors.textPrimary },
+                  formRole === 'staff' && { color: colors.primary },
                 ]}
               >
-                Staff Akuntansi
+                {t('common.staff')}
               </Text>
-              <Text style={styles.roleOptionSub}>
-                Dapat mencatat kas masuk & kas keluar
+              <Text style={[styles.roleOptionSub, { color: colors.textMuted }]}>
+                Akses pencatatan kas masuk & keluar
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.roleOption,
-                formRole === 'admin' && styles.roleOptionActive,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formRole === 'admin' && { backgroundColor: colors.primarySubtle, borderColor: colors.primary },
               ]}
               onPress={() => setFormRole('admin')}
             >
               <Text
                 style={[
                   styles.roleOptionTitle,
-                  formRole === 'admin' && styles.roleOptionTitleActive,
+                  { color: colors.textPrimary },
+                  formRole === 'admin' && { color: colors.primary },
                 ]}
               >
-                Administrator
+                {t('common.admin')}
               </Text>
-              <Text style={styles.roleOptionSub}>
-                Akses penuh termasuk Master Data & Tim
+              <Text style={[styles.roleOptionSub, { color: colors.textMuted }]}>
+                Akses penuh sistem & kelola pengguna
               </Text>
             </TouchableOpacity>
           </View>
@@ -431,17 +439,17 @@ export function TeamScreen() {
       <Modal
         visible={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit Data Pengguna"
+        title={t('action.edit')}
         subtitle={selectedUser?.name}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowEditModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Perbarui Akun'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveEdit}
               loading={submitting}
             />
@@ -451,14 +459,14 @@ export function TeamScreen() {
         {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
 
         <FormInput
-          label="Nama Lengkap"
+          label={t('common.user')}
           value={formName}
           onChangeText={setFormName}
           required
         />
 
         <FormInput
-          label="Alamat Email"
+          label="Email"
           value={formEmail}
           onChangeText={setFormEmail}
           keyboardType="email-address"
@@ -466,41 +474,43 @@ export function TeamScreen() {
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Peran Akses (Role) *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('common.role')} *</Text>
           <View style={styles.roleSelectorRow}>
             <TouchableOpacity
               style={[
                 styles.roleOption,
-                formRole === 'staff' && styles.roleOptionActive,
-                selectedUser?.id === currentUser?.id && { opacity: 0.5 },
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formRole === 'staff' && { backgroundColor: colors.primarySubtle, borderColor: colors.primary },
               ]}
-              disabled={selectedUser?.id === currentUser?.id}
               onPress={() => setFormRole('staff')}
             >
               <Text
                 style={[
                   styles.roleOptionTitle,
-                  formRole === 'staff' && styles.roleOptionTitleActive,
+                  { color: colors.textPrimary },
+                  formRole === 'staff' && { color: colors.primary },
                 ]}
               >
-                Staff Akuntansi
+                {t('common.staff')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.roleOption,
-                formRole === 'admin' && styles.roleOptionActive,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formRole === 'admin' && { backgroundColor: colors.primarySubtle, borderColor: colors.primary },
               ]}
               onPress={() => setFormRole('admin')}
             >
               <Text
                 style={[
                   styles.roleOptionTitle,
-                  formRole === 'admin' && styles.roleOptionTitleActive,
+                  { color: colors.textPrimary },
+                  formRole === 'admin' && { color: colors.primary },
                 ]}
               >
-                Administrator
+                {t('common.admin')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -511,32 +521,32 @@ export function TeamScreen() {
       <Modal
         visible={showResetModal}
         onClose={() => setShowResetModal(false)}
-        title="Reset Kata Sandi"
-        subtitle={`Atur ulang sandi untuk ${selectedUser?.name}`}
+        title="Reset Password"
+        subtitle={selectedUser?.name}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowResetModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Reset Sandi'}
+              title={submitting ? t('action.refreshing') : 'Reset Password'}
               onPress={handleSaveReset}
               loading={submitting}
+              variant="danger"
             />
           </>
         }
       >
         {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
 
-        <Text style={styles.resetWarning}>
-          Perhatian: Me-reset kata sandi akan otomatis memutus seluruh sesi login aktif
-          pengguna ini di perangkat lain.
+        <Text style={[styles.resetWarning, { color: colors.warning, backgroundColor: colors.warningBg }]}>
+          Kata sandi pengguna ini akan langsung diperbarui. Pastikan menginformasikan kata sandi baru kepada pengguna.
         </Text>
 
         <FormInput
-          label="Kata Sandi Baru"
+          label="Password Baru"
           placeholder="Minimal 6 karakter"
           value={formPassword}
           onChangeText={setFormPassword}
@@ -580,21 +590,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: theme.borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primarySubtle,
-    borderColor: colors.primaryLight,
   },
   filterChipText: {
     fontSize: 12,
-    color: colors.textSecondary,
     fontWeight: '600',
-  },
-  filterChipTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
   },
   centerContainer: {
     padding: 40,
@@ -603,7 +602,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 13,
-    color: colors.textMuted,
   },
   emptyContainer: {
     padding: 30,
@@ -611,7 +609,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textMuted,
   },
   table: {
     width: '100%',
@@ -620,14 +617,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
   th: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textSecondary,
     letterSpacing: 0.2,
   },
   tableRow: {
@@ -636,7 +631,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   td: {
     justifyContent: 'center',
@@ -645,49 +639,41 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primarySubtle,
     borderWidth: 1,
-    borderColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   avatarText: {
-    color: colors.primary,
     fontWeight: '700',
     fontSize: 13,
   },
   userName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   selfTag: {
     fontSize: 11,
-    color: colors.primary,
     fontWeight: '600',
   },
   userEmail: {
     fontSize: 12,
-    color: colors.textMuted,
     marginTop: 1,
   },
   txCountText: {
     fontSize: 13,
-    color: colors.textSecondary,
   },
   actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   actionBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   fieldGroup: {
     marginBottom: 16,
@@ -695,7 +681,6 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: 8,
   },
   roleSelectorRow: {
@@ -707,38 +692,25 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  roleOptionActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primarySubtle,
   },
   roleOptionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
     marginBottom: 2,
-  },
-  roleOptionTitleActive: {
-    color: colors.primary,
   },
   roleOptionSub: {
     fontSize: 11,
-    color: colors.textMuted,
   },
   resetWarning: {
     fontSize: 12,
-    color: colors.warning,
-    backgroundColor: colors.warningBg,
     padding: 10,
     borderRadius: theme.borderRadius.md,
     marginBottom: 14,
   },
   modalError: {
     fontSize: 12,
-    color: colors.cashOut,
-    backgroundColor: colors.cashOutBg,
+    color: '#ef4444',
+    backgroundColor: '#fee2e2',
     padding: 10,
     borderRadius: theme.borderRadius.md,
     marginBottom: 12,

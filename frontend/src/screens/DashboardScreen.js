@@ -7,12 +7,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { colors, theme } from '../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
 
 export function DashboardScreen({ onNavigate }) {
+  const { colors } = useTheme();
+  const { t, formatCurrency, formatDate } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState(null);
   const [accounts, setAccounts] = useState([]);
@@ -48,109 +53,112 @@ export function DashboardScreen({ onNavigate }) {
 
   if (loading && !overview) {
     return (
-      <View style={styles.centerContainer}>
+      <View style={[styles.centerContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Memuat ikhtisar keuangan...</Text>
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('app.loading')}</Text>
       </View>
     );
   }
 
   const cashFlow = overview?.cash_flow || {};
+  const totalIn = cashFlow.total_cash_in !== undefined ? Number(cashFlow.total_cash_in) : 0;
+  const totalOut = cashFlow.total_cash_out !== undefined ? Number(cashFlow.total_cash_out) : 0;
+  const netFlow = cashFlow.net_cash_flow !== undefined ? Number(cashFlow.net_cash_flow) : (totalIn - totalOut);
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       {/* KPI Cards Row */}
       <View style={styles.kpiGrid}>
         {/* Cash In Card */}
-        <View style={[styles.kpiCard, styles.kpiCardIn]}>
+        <View style={[styles.kpiCard, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
           <View style={styles.kpiTopRow}>
-            <Text style={styles.kpiLabel}>Total Cash In</Text>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_in')}</Text>
             <View style={[styles.kpiIconBox, { backgroundColor: colors.cashInBg }]}>
-              <Text style={{ color: colors.cashIn, fontWeight: '700' }}>↓</Text>
+              <Feather name="arrow-down-left" size={14} color={colors.cashIn} />
             </View>
           </View>
           <Text style={[styles.kpiValue, { color: colors.cashIn }]}>
-            {cashFlow.total_cash_in_formatted || 'Rp 0'}
+            {formatCurrency(totalIn)}
           </Text>
-          <Text style={styles.kpiSub}>Total penerimaan kas tercatat</Text>
+          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('common.rate_info')}</Text>
         </View>
 
         {/* Cash Out Card */}
-        <View style={[styles.kpiCard, styles.kpiCardOut]}>
+        <View style={[styles.kpiCard, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
           <View style={styles.kpiTopRow}>
-            <Text style={styles.kpiLabel}>Total Cash Out</Text>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_out')}</Text>
             <View style={[styles.kpiIconBox, { backgroundColor: colors.cashOutBg }]}>
-              <Text style={{ color: colors.cashOut, fontWeight: '700' }}>↑</Text>
+              <Feather name="arrow-up-right" size={14} color={colors.cashOut} />
             </View>
           </View>
           <Text style={[styles.kpiValue, { color: colors.cashOut }]}>
-            {cashFlow.total_cash_out_formatted || 'Rp 0'}
+            {formatCurrency(totalOut)}
           </Text>
-          <Text style={styles.kpiSub}>Total pengeluaran kas periode ini</Text>
+          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('common.rate_info')}</Text>
         </View>
 
         {/* Net Flow Card */}
-        <View style={[styles.kpiCard, styles.kpiCardNet]}>
+        <View style={[styles.kpiCard, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
           <View style={styles.kpiTopRow}>
-            <Text style={styles.kpiLabel}>Net Cash Flow</Text>
+            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.net_flow')}</Text>
             <Badge
-              label={cashFlow.status || 'Net Flow'}
-              variant={cashFlow.net_cash_flow >= 0 ? 'success' : 'danger'}
+              label={netFlow >= 0 ? '+ Surplus' : '- Defisit'}
+              variant={netFlow >= 0 ? 'success' : 'danger'}
               size="sm"
             />
           </View>
           <Text style={[styles.kpiValue, { color: colors.primary }]}>
-            {cashFlow.net_cash_flow_formatted || 'Rp 0'}
+            {formatCurrency(netFlow)}
           </Text>
-          <Text style={styles.kpiSub}>Surplus / defisit kas bersih</Text>
+          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('dashboard.net_flow')}</Text>
         </View>
       </View>
 
       {/* Accounts & Cash Balance Overview */}
       <Card
-        title="Rekening Bank & Kas Aktif"
-        subtitle="Daftar saldo berjalan setiap rekening"
+        title={t('dashboard.active_accounts')}
+        subtitle={t('screen.master_accounts.subtitle')}
         headerRight={
           <TouchableOpacity
             onPress={() => onNavigate && onNavigate('master_accounts')}
             style={styles.linkButton}
           >
-            <Text style={styles.linkText}>Kelola Rekening →</Text>
+            <Text style={[styles.linkText, { color: colors.primary }]}>{t('nav.master_accounts')} →</Text>
           </TouchableOpacity>
         }
       >
         <View style={styles.accountsGrid}>
           {accounts.map((acc) => (
-            <View key={acc.id} style={styles.accountCard}>
+            <View key={acc.id} style={[styles.accountCard, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}>
               <View style={styles.accHeader}>
-                <View style={styles.accIconBox}>
-                  <Text style={styles.accIcon}>🏦</Text>
+                <View style={[styles.accIconBox, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+                  <Feather name="credit-card" size={16} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.accName} numberOfLines={1}>
+                  <Text style={[styles.accName, { color: colors.textPrimary }]} numberOfLines={1}>
                     {acc.name}
                   </Text>
-                  <Text style={styles.accNumber}>
-                    {acc.account_number || 'Kas Fisik / Operasional'}
+                  <Text style={[styles.accNumber, { color: colors.textMuted }]}>
+                    {acc.account_number || 'Operasional / Cash'}
                   </Text>
                 </View>
               </View>
 
-              <View style={styles.accDivider} />
+              <View style={[styles.accDivider, { backgroundColor: colors.border }]} />
 
               <View style={styles.accBalanceRow}>
-                <Text style={styles.accBalanceLabel}>Saldo Berjalan</Text>
-                <Text style={styles.accBalanceValue}>
-                  {acc.current_balance_formatted || `Rp ${Number(acc.current_balance || 0).toLocaleString('id-ID')}`}
+                <Text style={[styles.accBalanceLabel, { color: colors.textSecondary }]}>{t('dashboard.total_balance')}</Text>
+                <Text style={[styles.accBalanceValue, { color: colors.textPrimary }]}>
+                  {formatCurrency(acc.current_balance || 0)}
                 </Text>
               </View>
 
               <View style={styles.accSubRow}>
-                <Text style={styles.accSubText}>
-                  Masuk: Rp {Number(acc.total_in || 0).toLocaleString('id-ID')}
+                <Text style={[styles.accSubText, { color: colors.cashIn }]}>
+                  In: {formatCurrency(acc.total_in || 0)}
                 </Text>
-                <Text style={styles.accSubText}>
-                  Keluar: Rp {Number(acc.total_out || 0).toLocaleString('id-ID')}
+                <Text style={[styles.accSubText, { color: colors.cashOut }]}>
+                  Out: {formatCurrency(acc.total_out || 0)}
                 </Text>
               </View>
             </View>
@@ -160,56 +168,55 @@ export function DashboardScreen({ onNavigate }) {
 
       {/* Recent Transactions Activity */}
       <Card
-        title="Aktivitas Transaksi Terkini"
-        subtitle="Transaksi kas masuk & keluar paling baru"
+        title={t('dashboard.recent_transactions')}
+        subtitle={t('screen.history.subtitle')}
         headerRight={
           <TouchableOpacity
             onPress={() => onNavigate && onNavigate('history')}
             style={styles.linkButton}
           >
-            <Text style={styles.linkText}>Lihat Semua (History) →</Text>
+            <Text style={[styles.linkText, { color: colors.primary }]}>{t('nav.history')} →</Text>
           </TouchableOpacity>
         }
       >
         {!Array.isArray(recentTransactions) || recentTransactions.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Belum ada riwayat transaksi tercatat.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('dashboard.no_transactions')}</Text>
           </View>
         ) : (
           recentTransactions.map((tx) => {
             const isIn = tx.type === 'cash_in';
             return (
-              <View key={tx.id} style={styles.txRow}>
+              <View key={tx.id} style={[styles.txRow, { borderBottomColor: colors.borderLight }]}>
                 <View
                   style={[
                     styles.txIndicator,
                     { backgroundColor: isIn ? colors.cashInBg : colors.cashOutBg },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.txIndicatorText,
-                      { color: isIn ? colors.cashIn : colors.cashOut },
-                    ]}
-                  >
-                    {isIn ? '↓' : '↑'}
-                  </Text>
+                  <Feather
+                    name={isIn ? 'arrow-down-left' : 'arrow-up-right'}
+                    size={14}
+                    color={isIn ? colors.cashIn : colors.cashOut}
+                  />
                 </View>
 
                 <View style={styles.txDetails}>
-                  <Text style={styles.txDesc} numberOfLines={1}>
-                    {tx.description || (isIn ? 'Kas Masuk' : 'Kas Keluar')}
+                  <Text style={[styles.txDesc, { color: colors.textPrimary }]} numberOfLines={1}>
+                    {tx.description || (isIn ? t('nav.cash_in') : t('nav.cash_out'))}
                   </Text>
                   <View style={styles.txMetaRow}>
                     <Badge
-                      label={tx.category?.name || 'Umum'}
+                      label={tx.category?.name || t('common.all')}
                       variant={isIn ? 'cash_in' : 'cash_out'}
                       size="sm"
                     />
-                    <Text style={styles.txMetaDot}>•</Text>
-                    <Text style={styles.txMetaText}>{tx.account?.name || 'Kas'}</Text>
-                    <Text style={styles.txMetaDot}>•</Text>
-                    <Text style={styles.txMetaText}>{tx.date}</Text>
+                    <Text style={[styles.txMetaDot, { color: colors.textLight }]}>•</Text>
+                    <Text style={[styles.txMetaText, { color: colors.textMuted }]}>{tx.account?.name || 'Kas'}</Text>
+                    <Text style={[styles.txMetaDot, { color: colors.textLight }]}>•</Text>
+                    <Text style={[styles.txMetaText, { color: colors.textMuted }]}>
+                      {formatDate(tx.date, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </Text>
                   </View>
                 </View>
 
@@ -220,9 +227,9 @@ export function DashboardScreen({ onNavigate }) {
                       { color: isIn ? colors.cashIn : colors.cashOut },
                     ]}
                   >
-                    {isIn ? '+' : '-'}Rp {Number(tx.amount).toLocaleString('id-ID')}
+                    {isIn ? '+' : '-'}{formatCurrency(tx.amount)}
                   </Text>
-                  <Text style={styles.txMethod}>{tx.payment_method}</Text>
+                  <Text style={[styles.txMethod, { color: colors.textMuted }]}>{tx.payment_method}</Text>
                 </View>
               </View>
             );
@@ -247,7 +254,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: colors.textMuted,
   },
   kpiGrid: {
     flexDirection: 'row',
@@ -258,24 +264,19 @@ const styles = StyleSheet.create({
   kpiCard: {
     flex: 1,
     minWidth: 260,
-    backgroundColor: colors.surface,
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 20,
     ...theme.shadows.sm,
   },
   kpiCardIn: {
     borderLeftWidth: 4,
-    borderLeftColor: colors.cashIn,
   },
   kpiCardOut: {
     borderLeftWidth: 4,
-    borderLeftColor: colors.cashOut,
   },
   kpiCardNet: {
     borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
   },
   kpiTopRow: {
     flexDirection: 'row',
@@ -286,7 +287,6 @@ const styles = StyleSheet.create({
   kpiLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   kpiIconBox: {
     width: 28,
@@ -303,7 +303,6 @@ const styles = StyleSheet.create({
   },
   kpiSub: {
     fontSize: 11,
-    color: colors.textMuted,
   },
   linkButton: {
     paddingVertical: 4,
@@ -312,7 +311,6 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.primary,
   },
   accountsGrid: {
     flexDirection: 'row',
@@ -322,9 +320,7 @@ const styles = StyleSheet.create({
   accountCard: {
     flex: 1,
     minWidth: 240,
-    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: theme.borderRadius.md,
     padding: 16,
   },
@@ -336,29 +332,21 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  accIcon: {
-    fontSize: 16,
-  },
   accName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   accNumber: {
     fontSize: 11,
-    color: colors.textMuted,
     marginTop: 1,
   },
   accDivider: {
     height: 1,
-    backgroundColor: colors.border,
     marginVertical: 12,
   },
   accBalanceRow: {
@@ -369,13 +357,11 @@ const styles = StyleSheet.create({
   },
   accBalanceLabel: {
     fontSize: 12,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   accBalanceValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: colors.textPrimary,
   },
   accSubRow: {
     flexDirection: 'row',
@@ -383,7 +369,7 @@ const styles = StyleSheet.create({
   },
   accSubText: {
     fontSize: 11,
-    color: colors.textMuted,
+    fontWeight: '600',
   },
   emptyContainer: {
     padding: 24,
@@ -392,14 +378,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textMuted,
   },
   txRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   txIndicator: {
     width: 32,
@@ -409,17 +393,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 14,
   },
-  txIndicatorText: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
   txDetails: {
     flex: 1,
   },
   txDesc: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: 4,
   },
   txMetaRow: {
@@ -428,12 +407,10 @@ const styles = StyleSheet.create({
   },
   txMetaDot: {
     marginHorizontal: 6,
-    color: colors.textLight,
     fontSize: 10,
   },
   txMetaText: {
     fontSize: 12,
-    color: colors.textMuted,
   },
   txAmountContainer: {
     alignItems: 'flex-end',
@@ -445,7 +422,6 @@ const styles = StyleSheet.create({
   },
   txMethod: {
     fontSize: 11,
-    color: colors.textMuted,
     marginTop: 2,
   },
 });

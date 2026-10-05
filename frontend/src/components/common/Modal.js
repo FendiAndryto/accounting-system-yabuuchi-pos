@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Platform,
 } from 'react-native';
-import { colors, theme } from '../../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
+import { theme } from '../../theme';
 
 export function Modal({
   visible,
@@ -19,6 +20,8 @@ export function Modal({
   footer,
   maxWidth = 520,
 }) {
+  const { colors } = useTheme();
+
   if (!visible) return null;
 
   return (
@@ -29,19 +32,19 @@ export function Modal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={[styles.container, { maxWidth }]}>
+        <View style={[styles.container, { maxWidth, backgroundColor: colors.surface, borderColor: colors.border }]}>
           {/* Header */}
-          <View style={styles.header}>
+          <View style={[styles.header, { borderBottomColor: colors.borderLight }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{title}</Text>
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+              {subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text> : null}
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={styles.closeBtn}
+              style={[styles.closeBtn, { backgroundColor: colors.surfaceSecondary }]}
               activeOpacity={0.7}
             >
-              <Text style={styles.closeText}>✕</Text>
+              <Feather name="x" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -55,7 +58,11 @@ export function Modal({
           </ScrollView>
 
           {/* Footer */}
-          {footer ? <View style={styles.footer}>{footer}</View> : null}
+          {footer ? (
+            <View style={[styles.footer, { borderTopColor: colors.borderLight, backgroundColor: colors.surfaceSecondary }]}>
+              {footer}
+            </View>
+          ) : null}
         </View>
       </View>
     </RNModal>
@@ -65,7 +72,7 @@ export function Modal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)', // 45% dark slate scrim
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -74,10 +81,8 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxHeight: '90%',
-    backgroundColor: colors.surface,
     borderRadius: theme.borderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
     ...theme.shadows.lg,
     overflow: 'hidden',
   },
@@ -86,7 +91,6 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -94,27 +98,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.textPrimary,
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
-    color: colors.textMuted,
     marginTop: 2,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 12,
-  },
-  closeText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    fontWeight: '700',
   },
   body: {
     maxHeight: 500,
@@ -126,8 +122,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    backgroundColor: colors.surfaceSecondary,
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: 10,

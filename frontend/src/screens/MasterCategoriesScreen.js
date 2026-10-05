@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { colors, theme } from '../theme';
+import { Feather } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { theme } from '../theme';
 import { accountingService } from '../services/accountingService';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -16,6 +19,8 @@ import { Modal } from '../components/common/Modal';
 import { FormInput } from '../components/common/FormInput';
 
 export function MasterCategoriesScreen() {
+  const { colors } = useTheme();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'cash_in' | 'cash_out'
@@ -126,7 +131,7 @@ export function MasterCategoriesScreen() {
   };
 
   const handleDelete = async (cat) => {
-    const confirmed = window.confirm
+    const confirmed = typeof window !== 'undefined' && window.confirm
       ? window.confirm(`Apakah Anda yakin ingin menghapus kategori "${cat.name}"?`)
       : true;
 
@@ -141,77 +146,79 @@ export function MasterCategoriesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Top Filter and Action Bar */}
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
+      {/* Top Action Bar */}
       <View style={styles.actionBar}>
         <View style={styles.filterChipsRow}>
           {[
-            { id: 'all', label: 'Semua Kategori' },
-            { id: 'cash_in', label: '🟢 Cash In' },
-            { id: 'cash_out', label: '🔴 Cash Out' },
-          ].map((chip) => (
+            { key: 'all', label: t('common.all') },
+            { key: 'cash_in', label: t('nav.cash_in') },
+            { key: 'cash_out', label: t('nav.cash_out') },
+          ].map((item) => (
             <TouchableOpacity
-              key={chip.id}
+              key={item.key}
               style={[
                 styles.filterChip,
-                typeFilter === chip.id && styles.filterChipActive,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                typeFilter === item.key && { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight },
               ]}
-              onPress={() => setTypeFilter(chip.id)}
+              onPress={() => setTypeFilter(item.key)}
             >
               <Text
                 style={[
                   styles.filterChipText,
-                  typeFilter === chip.id && styles.filterChipTextActive,
+                  { color: colors.textSecondary },
+                  typeFilter === item.key && { color: colors.primary, fontWeight: '700' },
                 ]}
               >
-                {chip.label}
+                {item.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <Button
-          title="+ Tambah Kategori"
+          title={t('master.add_category')}
           onPress={handleOpenAdd}
-          icon="🏷️"
+          icon={<Feather name="tag" size={14} color="#ffffff" />}
           size="md"
         />
       </View>
 
       {/* Categories Card */}
       <Card
-        title="Daftar Kategori Kas"
-        subtitle="Klasifikasi pos arus kas masuk dan keluar"
+        title={t('screen.master_categories.title')}
+        subtitle={t('screen.master_categories.subtitle')}
       >
         {loading ? (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.loadingText}>Memuat kategori...</Text>
+            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('action.refreshing')}</Text>
           </View>
         ) : categories.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Tidak ada data kategori ditemukan.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('common.all')}: 0 data</Text>
           </View>
         ) : (
           <View style={styles.table}>
             {/* Header */}
-            <View style={styles.tableHeader}>
-              <Text style={[styles.th, { flex: 2 }]}>Nama Kategori</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>Tipe Kas</Text>
-              <Text style={[styles.th, { flex: 1.5 }]}>Penggunaan Transaksi</Text>
-              <Text style={[styles.th, { flex: 1, textAlign: 'center' }]}>Status</Text>
-              <Text style={[styles.th, { flex: 1.5, textAlign: 'center' }]}>Aksi</Text>
+            <View style={[styles.tableHeader, { backgroundColor: colors.surfaceSecondary }]}>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 2 }]}>{t('master.category_name')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('master.category_type')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5 }]}>{t('nav.transactions')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1, textAlign: 'center' }]}>{t('common.status')}</Text>
+              <Text style={[styles.th, { color: colors.textSecondary, flex: 1.5, textAlign: 'center' }]}>{t('action.actions')}</Text>
             </View>
 
             {/* Rows */}
             {categories.map((cat) => {
               const isIn = cat.type === 'cash_in';
               return (
-                <View key={cat.id} style={styles.tableRow}>
+                <View key={cat.id} style={[styles.tableRow, { borderBottomColor: colors.borderLight }]}>
                   <View style={[styles.td, { flex: 2 }]}>
-                    <Text style={styles.catName}>{cat.name}</Text>
+                    <Text style={[styles.catName, { color: colors.textPrimary }]}>{cat.name}</Text>
                     {cat.description ? (
-                      <Text style={styles.catDesc} numberOfLines={1}>
+                      <Text style={[styles.catDesc, { color: colors.textMuted }]} numberOfLines={1}>
                         {cat.description}
                       </Text>
                     ) : null}
@@ -219,19 +226,21 @@ export function MasterCategoriesScreen() {
 
                   <View style={[styles.td, { flex: 1.5 }]}>
                     <Badge
-                      label={isIn ? 'Cash In (Masuk)' : 'Cash Out (Keluar)'}
+                      label={isIn ? t('nav.cash_in') : t('nav.cash_out')}
                       variant={isIn ? 'cash_in' : 'cash_out'}
                       size="sm"
                     />
                   </View>
 
                   <View style={[styles.td, { flex: 1.5 }]}>
-                    <Text style={styles.txCountText}>{cat.transactions_count} transaksi</Text>
+                    <Text style={[styles.txCountText, { color: colors.textSecondary }]}>
+                      {cat.transactions_count} {t('nav.transactions').toLowerCase()}
+                    </Text>
                   </View>
 
                   <View style={[styles.td, { flex: 1, alignItems: 'center' }]}>
                     <Badge
-                      label={cat.is_active ? 'Aktif' : 'Nonaktif'}
+                      label={cat.is_active ? t('common.active') : t('common.inactive')}
                       variant={cat.is_active ? 'success' : 'neutral'}
                       size="sm"
                     />
@@ -244,10 +253,11 @@ export function MasterCategoriesScreen() {
                     ]}
                   >
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
                       onPress={() => handleOpenEdit(cat)}
                     >
-                      <Text style={styles.actionBtnText}>✏ Edit</Text>
+                      <Feather name="edit-2" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                      <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('action.edit')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -268,7 +278,7 @@ export function MasterCategoriesScreen() {
                           fontWeight: '600',
                         }}
                       >
-                        {cat.is_active ? 'Matikan' : 'Aktifkan'}
+                        {cat.is_active ? 'Off' : 'On'}
                       </Text>
                     </TouchableOpacity>
 
@@ -277,9 +287,7 @@ export function MasterCategoriesScreen() {
                         style={[styles.actionBtn, { borderColor: colors.cashOutBorder }]}
                         onPress={() => handleDelete(cat)}
                       >
-                        <Text style={{ fontSize: 11, color: colors.cashOut, fontWeight: '600' }}>
-                          🗑
-                        </Text>
+                        <Feather name="trash-2" size={12} color={colors.cashOut} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -294,17 +302,17 @@ export function MasterCategoriesScreen() {
       <Modal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
-        title="Tambah Kategori Baru"
-        subtitle="Pos pencatatan arus kas"
+        title={t('master.add_category')}
+        subtitle={t('screen.master_categories.subtitle')}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowAddModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Simpan Kategori'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveAdd}
               loading={submitting}
             />
@@ -314,54 +322,60 @@ export function MasterCategoriesScreen() {
         {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
 
         <FormInput
-          label="Nama Kategori"
-          placeholder="Contoh: Pembayaran Klien, Sewa Kantor, Gaji Karyawan"
+          label={t('master.category_name')}
+          placeholder="e.g. Pembayaran Klien, Sewa Kantor"
           value={formName}
           onChangeText={setFormName}
           required
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Tipe Arus Kas *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('master.category_type')} *</Text>
           <View style={styles.typeSelectorRow}>
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                formType === 'cash_in' && styles.typeOptionActiveIn,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formType === 'cash_in' && { backgroundColor: colors.cashInBg, borderColor: colors.cashInBorder },
               ]}
               onPress={() => setFormType('cash_in')}
             >
+              <Feather name="arrow-down-left" size={14} color={colors.cashIn} style={{ marginRight: 6 }} />
               <Text
                 style={[
                   styles.typeOptionText,
+                  { color: colors.textSecondary },
                   formType === 'cash_in' && { color: colors.cashIn, fontWeight: '700' },
                 ]}
               >
-                🟢 Cash In (Pemasukan)
+                {t('nav.cash_in')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                formType === 'cash_out' && styles.typeOptionActiveOut,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formType === 'cash_out' && { backgroundColor: colors.cashOutBg, borderColor: colors.cashOutBorder },
               ]}
               onPress={() => setFormType('cash_out')}
             >
+              <Feather name="arrow-up-right" size={14} color={colors.cashOut} style={{ marginRight: 6 }} />
               <Text
                 style={[
                   styles.typeOptionText,
+                  { color: colors.textSecondary },
                   formType === 'cash_out' && { color: colors.cashOut, fontWeight: '700' },
                 ]}
               >
-                🔴 Cash Out (Pengeluaran)
+                {t('nav.cash_out')}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <FormInput
-          label="Deskripsi / Catatan"
+          label={t('common.notes')}
           placeholder="Keterangan singkat kategori ini..."
           value={formDesc}
           onChangeText={setFormDesc}
@@ -374,17 +388,17 @@ export function MasterCategoriesScreen() {
       <Modal
         visible={showEditModal}
         onClose={() => setShowEditModal(false)}
-        title="Edit Kategori"
+        title={t('master.edit_category')}
         subtitle={selectedCategory?.name}
         footer={
           <>
             <Button
-              title="Batal"
+              title={t('action.cancel')}
               variant="outline"
               onPress={() => setShowEditModal(false)}
             />
             <Button
-              title={submitting ? 'Menyimpan...' : 'Perbarui Kategori'}
+              title={submitting ? t('action.refreshing') : t('action.save')}
               onPress={handleSaveEdit}
               loading={submitting}
             />
@@ -394,62 +408,63 @@ export function MasterCategoriesScreen() {
         {formError ? <Text style={styles.modalError}>⚠ {formError}</Text> : null}
 
         <FormInput
-          label="Nama Kategori"
+          label={t('master.category_name')}
           value={formName}
           onChangeText={setFormName}
           required
         />
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Tipe Arus Kas *</Text>
+          <Text style={[styles.fieldLabel, { color: colors.textPrimary }]}>{t('master.category_type')} *</Text>
           <View style={styles.typeSelectorRow}>
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                formType === 'cash_in' && styles.typeOptionActiveIn,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formType === 'cash_in' && { backgroundColor: colors.cashInBg, borderColor: colors.cashInBorder },
                 selectedCategory?.transactions_count > 0 && { opacity: 0.6 },
               ]}
               disabled={selectedCategory?.transactions_count > 0}
               onPress={() => setFormType('cash_in')}
             >
+              <Feather name="arrow-down-left" size={14} color={colors.cashIn} style={{ marginRight: 6 }} />
               <Text
                 style={[
                   styles.typeOptionText,
+                  { color: colors.textSecondary },
                   formType === 'cash_in' && { color: colors.cashIn, fontWeight: '700' },
                 ]}
               >
-                🟢 Cash In
+                {t('nav.cash_in')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                formType === 'cash_out' && styles.typeOptionActiveOut,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                formType === 'cash_out' && { backgroundColor: colors.cashOutBg, borderColor: colors.cashOutBorder },
                 selectedCategory?.transactions_count > 0 && { opacity: 0.6 },
               ]}
               disabled={selectedCategory?.transactions_count > 0}
               onPress={() => setFormType('cash_out')}
             >
+              <Feather name="arrow-up-right" size={14} color={colors.cashOut} style={{ marginRight: 6 }} />
               <Text
                 style={[
                   styles.typeOptionText,
+                  { color: colors.textSecondary },
                   formType === 'cash_out' && { color: colors.cashOut, fontWeight: '700' },
                 ]}
               >
-                🔴 Cash Out
+                {t('nav.cash_out')}
               </Text>
             </TouchableOpacity>
           </View>
-          {selectedCategory?.transactions_count > 0 && (
-            <Text style={styles.fieldHelper}>
-              Tipe dikunci karena kategori ini sudah dipakai dalam transaksi tercatat.
-            </Text>
-          )}
         </View>
 
         <FormInput
-          label="Deskripsi / Catatan"
+          label={t('common.notes')}
           value={formDesc}
           onChangeText={setFormDesc}
           multiline
@@ -481,21 +496,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: theme.borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  filterChipActive: {
-    backgroundColor: colors.primarySubtle,
-    borderColor: colors.primaryLight,
   },
   filterChipText: {
     fontSize: 13,
-    color: colors.textSecondary,
     fontWeight: '600',
-  },
-  filterChipTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
   },
   centerContainer: {
     padding: 40,
@@ -504,7 +508,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 13,
-    color: colors.textMuted,
   },
   emptyContainer: {
     padding: 30,
@@ -512,7 +515,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 13,
-    color: colors.textMuted,
   },
   table: {
     width: '100%',
@@ -521,14 +523,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     marginBottom: 8,
   },
   th: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.textSecondary,
     letterSpacing: 0.3,
   },
   tableRow: {
@@ -537,7 +537,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   td: {
     justifyContent: 'center',
@@ -545,29 +544,25 @@ const styles = StyleSheet.create({
   catName: {
     fontSize: 14,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   catDesc: {
     fontSize: 11,
-    color: colors.textMuted,
     marginTop: 2,
   },
   txCountText: {
     fontSize: 13,
-    color: colors.textSecondary,
   },
   actionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
   actionBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   fieldGroup: {
     marginBottom: 16,
@@ -575,13 +570,7 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textPrimary,
     marginBottom: 6,
-  },
-  fieldHelper: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 4,
   },
   typeSelectorRow: {
     flexDirection: 'row',
@@ -589,31 +578,22 @@ const styles = StyleSheet.create({
   },
   typeOption: {
     flex: 1,
+    flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
     alignItems: 'center',
-  },
-  typeOptionActiveIn: {
-    backgroundColor: colors.cashInBg,
-    borderColor: colors.cashInBorder,
-  },
-  typeOptionActiveOut: {
-    backgroundColor: colors.cashOutBg,
-    borderColor: colors.cashOutBorder,
+    justifyContent: 'center',
   },
   typeOptionText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
   modalError: {
     fontSize: 12,
-    color: colors.cashOut,
-    backgroundColor: colors.cashOutBg,
+    color: '#ef4444',
+    backgroundColor: '#fee2e2',
     padding: 10,
     borderRadius: theme.borderRadius.md,
     marginBottom: 12,

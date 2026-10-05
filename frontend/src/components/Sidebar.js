@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { colors, theme } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { theme } from '../theme';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { Badge } from './common/Badge';
 
 export function Sidebar({ activeScreen, onSelectScreen }) {
   const { user, isAdmin, logout } = useAuth();
+  const { colors } = useTheme();
+  const { t } = useLanguage();
 
   // Accordion state for Master Data and Transaksi
   const [masterOpen, setMasterOpen] = useState(
@@ -16,42 +21,52 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
   );
 
   return (
-    <View style={styles.sidebar}>
+    <View style={[styles.sidebar, { backgroundColor: colors.sidebarBg, borderRightColor: colors.sidebarBorder }]}>
       {/* Brand Header */}
-      <View style={styles.brandContainer}>
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoText}>AT</Text>
+      <View style={[styles.brandContainer, { borderBottomColor: colors.borderLight }]}>
+        <View style={[styles.logoBadge, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.brandTextContainer}>
-          <Text style={styles.brandTitle}>AUBE TERRA</Text>
-          <Text style={styles.brandSubtitle}>Accounting System</Text>
+          <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>{t('app.title')}</Text>
+          <Text style={[styles.brandSubtitle, { color: colors.textMuted }]}>{t('app.subtitle')}</Text>
         </View>
       </View>
 
       {/* Nav List */}
       <ScrollView style={styles.navScroll} showsVerticalScrollIndicator={false}>
         <View style={styles.navSection}>
-          <Text style={styles.navSectionHeader}>MENU UTAMA</Text>
+          <Text style={[styles.navSectionHeader, { color: colors.textLight }]}>{t('nav.main_menu')}</Text>
 
           {/* 1. Dashboard */}
           <TouchableOpacity
             activeOpacity={0.7}
             style={[
               styles.navItem,
-              activeScreen === 'dashboard' && styles.navItemActive,
+              activeScreen === 'dashboard' && { backgroundColor: colors.sidebarItemActiveBg },
             ]}
             onPress={() => onSelectScreen('dashboard')}
           >
-            <Text style={styles.navIcon}>📊</Text>
+            <Feather
+              name="bar-chart-2"
+              size={17}
+              color={activeScreen === 'dashboard' ? colors.primary : colors.sidebarText}
+              style={styles.navIcon}
+            />
             <Text
               style={[
                 styles.navLabel,
+                { color: activeScreen === 'dashboard' ? colors.sidebarTextActive : colors.sidebarText },
                 activeScreen === 'dashboard' && styles.navLabelActive,
               ]}
             >
-              Dashboard
+              {t('nav.dashboard')}
             </Text>
-            {activeScreen === 'dashboard' && <View style={styles.activePill} />}
+            {activeScreen === 'dashboard' && <View style={[styles.activePill, { backgroundColor: colors.primary }]} />}
           </TouchableOpacity>
 
           {/* 2. Master Data (Dropdown / Accordion) */}
@@ -59,43 +74,69 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
             activeOpacity={0.7}
             style={[
               styles.navItem,
-              (activeScreen === 'master_accounts' || activeScreen === 'master_categories') &&
-                styles.navItemParentActive,
+              (activeScreen === 'master_accounts' || activeScreen === 'master_categories') && {
+                backgroundColor: colors.surfaceSecondary,
+              },
             ]}
             onPress={() => setMasterOpen((prev) => !prev)}
           >
-            <Text style={styles.navIcon}>📁</Text>
+            <Feather
+              name="folder"
+              size={17}
+              color={
+                activeScreen === 'master_accounts' || activeScreen === 'master_categories'
+                  ? colors.primary
+                  : colors.sidebarText
+              }
+              style={styles.navIcon}
+            />
             <Text
               style={[
                 styles.navLabel,
+                {
+                  color:
+                    activeScreen === 'master_accounts' || activeScreen === 'master_categories'
+                      ? colors.sidebarTextActive
+                      : colors.sidebarText,
+                },
                 (activeScreen === 'master_accounts' || activeScreen === 'master_categories') &&
                   styles.navLabelActive,
               ]}
             >
-              Master Data
+              {t('nav.master_data')}
             </Text>
-            <Text style={styles.chevronIcon}>{masterOpen ? '▾' : '▸'}</Text>
+            <Feather
+              name={masterOpen ? 'chevron-down' : 'chevron-right'}
+              size={14}
+              color={colors.textMuted}
+            />
           </TouchableOpacity>
 
           {/* Master Data Children */}
           {masterOpen && (
-            <View style={styles.submenuContainer}>
+            <View style={[styles.submenuContainer, { borderLeftColor: colors.borderLight }]}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 style={[
                   styles.submenuItem,
-                  activeScreen === 'master_accounts' && styles.submenuItemActive,
+                  activeScreen === 'master_accounts' && { backgroundColor: colors.sidebarItemActiveBg },
                 ]}
                 onPress={() => onSelectScreen('master_accounts')}
               >
-                <Text style={styles.submenuDot}>•</Text>
+                <Feather
+                  name="credit-card"
+                  size={12}
+                  color={activeScreen === 'master_accounts' ? colors.primary : colors.textLight}
+                  style={styles.submenuIcon}
+                />
                 <Text
                   style={[
                     styles.submenuLabel,
+                    { color: activeScreen === 'master_accounts' ? colors.primary : colors.textSecondary },
                     activeScreen === 'master_accounts' && styles.submenuLabelActive,
                   ]}
                 >
-                  Rekening Bank
+                  {t('nav.master_accounts')}
                 </Text>
               </TouchableOpacity>
 
@@ -103,18 +144,24 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
                 activeOpacity={0.7}
                 style={[
                   styles.submenuItem,
-                  activeScreen === 'master_categories' && styles.submenuItemActive,
+                  activeScreen === 'master_categories' && { backgroundColor: colors.sidebarItemActiveBg },
                 ]}
                 onPress={() => onSelectScreen('master_categories')}
               >
-                <Text style={styles.submenuDot}>•</Text>
+                <Feather
+                  name="tag"
+                  size={12}
+                  color={activeScreen === 'master_categories' ? colors.primary : colors.textLight}
+                  style={styles.submenuIcon}
+                />
                 <Text
                   style={[
                     styles.submenuLabel,
+                    { color: activeScreen === 'master_categories' ? colors.primary : colors.textSecondary },
                     activeScreen === 'master_categories' && styles.submenuLabelActive,
                   ]}
                 >
-                  Kategori
+                  {t('nav.master_categories')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -125,32 +172,52 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
             activeOpacity={0.7}
             style={[
               styles.navItem,
-              (activeScreen === 'cash_in' || activeScreen === 'cash_out') &&
-                styles.navItemParentActive,
+              (activeScreen === 'cash_in' || activeScreen === 'cash_out') && {
+                backgroundColor: colors.surfaceSecondary,
+              },
             ]}
             onPress={() => setTransaksiOpen((prev) => !prev)}
           >
-            <Text style={styles.navIcon}>💳</Text>
+            <Feather
+              name="repeat"
+              size={17}
+              color={
+                activeScreen === 'cash_in' || activeScreen === 'cash_out'
+                  ? colors.primary
+                  : colors.sidebarText
+              }
+              style={styles.navIcon}
+            />
             <Text
               style={[
                 styles.navLabel,
+                {
+                  color:
+                    activeScreen === 'cash_in' || activeScreen === 'cash_out'
+                      ? colors.sidebarTextActive
+                      : colors.sidebarText,
+                },
                 (activeScreen === 'cash_in' || activeScreen === 'cash_out') &&
                   styles.navLabelActive,
               ]}
             >
-              Transaksi
+              {t('nav.transactions')}
             </Text>
-            <Text style={styles.chevronIcon}>{transaksiOpen ? '▾' : '▸'}</Text>
+            <Feather
+              name={transaksiOpen ? 'chevron-down' : 'chevron-right'}
+              size={14}
+              color={colors.textMuted}
+            />
           </TouchableOpacity>
 
           {/* Transaksi Children */}
           {transaksiOpen && (
-            <View style={styles.submenuContainer}>
+            <View style={[styles.submenuContainer, { borderLeftColor: colors.borderLight }]}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 style={[
                   styles.submenuItem,
-                  activeScreen === 'cash_in' && styles.submenuItemActive,
+                  activeScreen === 'cash_in' && { backgroundColor: colors.sidebarItemActiveBg },
                 ]}
                 onPress={() => onSelectScreen('cash_in')}
               >
@@ -158,10 +225,11 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
                 <Text
                   style={[
                     styles.submenuLabel,
+                    { color: activeScreen === 'cash_in' ? colors.cashIn : colors.textSecondary },
                     activeScreen === 'cash_in' && styles.submenuLabelActive,
                   ]}
                 >
-                  Cash In (Pemasukan)
+                  {t('nav.cash_in')}
                 </Text>
               </TouchableOpacity>
 
@@ -169,7 +237,7 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
                 activeOpacity={0.7}
                 style={[
                   styles.submenuItem,
-                  activeScreen === 'cash_out' && styles.submenuItemActive,
+                  activeScreen === 'cash_out' && { backgroundColor: colors.sidebarItemActiveBg },
                 ]}
                 onPress={() => onSelectScreen('cash_out')}
               >
@@ -177,10 +245,11 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
                 <Text
                   style={[
                     styles.submenuLabel,
+                    { color: activeScreen === 'cash_out' ? colors.cashOut : colors.textSecondary },
                     activeScreen === 'cash_out' && styles.submenuLabelActive,
                   ]}
                 >
-                  Cash Out (Pengeluaran)
+                  {t('nav.cash_out')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -191,46 +260,58 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
             activeOpacity={0.7}
             style={[
               styles.navItem,
-              activeScreen === 'history' && styles.navItemActive,
+              activeScreen === 'history' && { backgroundColor: colors.sidebarItemActiveBg },
             ]}
             onPress={() => onSelectScreen('history')}
           >
-            <Text style={styles.navIcon}>📜</Text>
+            <Feather
+              name="file-text"
+              size={17}
+              color={activeScreen === 'history' ? colors.primary : colors.sidebarText}
+              style={styles.navIcon}
+            />
             <Text
               style={[
                 styles.navLabel,
+                { color: activeScreen === 'history' ? colors.sidebarTextActive : colors.sidebarText },
                 activeScreen === 'history' && styles.navLabelActive,
               ]}
             >
-              History
+              {t('nav.history')}
             </Text>
-            {activeScreen === 'history' && <View style={styles.activePill} />}
+            {activeScreen === 'history' && <View style={[styles.activePill, { backgroundColor: colors.primary }]} />}
           </TouchableOpacity>
 
           {/* 5. Manage Team (Admin Only) */}
           {isAdmin && (
             <>
-              <View style={styles.sectionDivider} />
-              <Text style={styles.navSectionHeader}>ADMINISTRASI</Text>
+              <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
+              <Text style={[styles.navSectionHeader, { color: colors.textLight }]}>{t('nav.administration')}</Text>
 
               <TouchableOpacity
                 activeOpacity={0.7}
                 style={[
                   styles.navItem,
-                  activeScreen === 'team' && styles.navItemActive,
+                  activeScreen === 'team' && { backgroundColor: colors.sidebarItemActiveBg },
                 ]}
                 onPress={() => onSelectScreen('team')}
               >
-                <Text style={styles.navIcon}>👥</Text>
+                <Feather
+                  name="users"
+                  size={17}
+                  color={activeScreen === 'team' ? colors.primary : colors.sidebarText}
+                  style={styles.navIcon}
+                />
                 <Text
                   style={[
                     styles.navLabel,
+                    { color: activeScreen === 'team' ? colors.sidebarTextActive : colors.sidebarText },
                     activeScreen === 'team' && styles.navLabelActive,
                   ]}
                 >
-                  Manage Team
+                  {t('nav.team')}
                 </Text>
-                {activeScreen === 'team' && <View style={styles.activePill} />}
+                {activeScreen === 'team' && <View style={[styles.activePill, { backgroundColor: colors.primary }]} />}
               </TouchableOpacity>
             </>
           )}
@@ -238,20 +319,20 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
       </ScrollView>
 
       {/* User Footer Profile & Logout */}
-      <View style={styles.userFooter}>
+      <View style={[styles.userFooter, { backgroundColor: colors.surface, borderTopColor: colors.borderLight }]}>
         <View style={styles.userInfoRow}>
-          <View style={styles.userAvatar}>
-            <Text style={styles.userAvatarText}>
+          <View style={[styles.userAvatar, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight }]}>
+            <Text style={[styles.userAvatarText, { color: colors.primary }]}>
               {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
             </Text>
           </View>
           <View style={styles.userDetails}>
-            <Text style={styles.userName} numberOfLines={1}>
-              {user?.name || 'Pengguna'}
+            <Text style={[styles.userName, { color: colors.textPrimary }]} numberOfLines={1}>
+              {user?.name || t('common.user')}
             </Text>
             <View style={{ marginTop: 2 }}>
               <Badge
-                label={user?.role === 'admin' ? 'Administrator' : 'Staff'}
+                label={user?.role === 'admin' ? t('common.admin') : t('common.staff')}
                 variant={user?.role === 'admin' ? 'admin' : 'staff'}
                 size="sm"
               />
@@ -261,11 +342,11 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
 
         <TouchableOpacity
           activeOpacity={0.7}
-          style={styles.logoutBtn}
+          style={[styles.logoutBtn, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border }]}
           onPress={logout}
         >
-          <Text style={styles.logoutIcon}>🚪</Text>
-          <Text style={styles.logoutText}>Keluar</Text>
+          <Feather name="log-out" size={13} color={colors.textSecondary} style={{ marginRight: 6 }} />
+          <Text style={[styles.logoutText, { color: colors.textSecondary }]}>{t('nav.logout')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -275,9 +356,7 @@ export function Sidebar({ activeScreen, onSelectScreen }) {
 const styles = StyleSheet.create({
   sidebar: {
     width: 260,
-    backgroundColor: colors.sidebarBg,
     borderRightWidth: 1,
-    borderRightColor: colors.sidebarBorder,
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
@@ -289,23 +368,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   logoBadge: {
-    width: 38,
-    height: 38,
+    width: 42,
+    height: 42,
     borderRadius: 10,
-    backgroundColor: colors.primary,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    padding: 3,
     ...theme.shadows.sm,
   },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  logoImage: {
+    width: 34,
+    height: 34,
   },
   brandTextContainer: {
     flex: 1,
@@ -313,12 +390,10 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: colors.textPrimary,
     letterSpacing: -0.3,
   },
   brandSubtitle: {
     fontSize: 11,
-    color: colors.textMuted,
     fontWeight: '500',
     marginTop: 1,
   },
@@ -332,7 +407,6 @@ const styles = StyleSheet.create({
   navSectionHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.textLight,
     letterSpacing: 0.8,
     paddingHorizontal: 12,
     marginBottom: 8,
@@ -347,45 +421,29 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     position: 'relative',
   },
-  navItemActive: {
-    backgroundColor: colors.sidebarItemActiveBg,
-  },
-  navItemParentActive: {
-    backgroundColor: colors.surfaceSecondary,
-  },
   navIcon: {
-    fontSize: 16,
     marginRight: 12,
   },
   navLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.sidebarText,
     flex: 1,
   },
   navLabelActive: {
-    color: colors.sidebarTextActive,
     fontWeight: '700',
-  },
-  chevronIcon: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginLeft: 6,
   },
   activePill: {
     width: 4,
     height: 18,
     borderRadius: 2,
-    backgroundColor: colors.primary,
     position: 'absolute',
     right: 8,
   },
   submenuContainer: {
-    paddingLeft: 28,
+    paddingLeft: 22,
     paddingRight: 8,
     marginBottom: 6,
     borderLeftWidth: 1.5,
-    borderLeftColor: colors.borderLight,
     marginLeft: 22,
   },
   submenuItem: {
@@ -396,12 +454,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.sm,
     marginBottom: 2,
   },
-  submenuItemActive: {
-    backgroundColor: colors.sidebarItemActiveBg,
-  },
-  submenuDot: {
-    color: colors.textLight,
-    fontSize: 14,
+  submenuIcon: {
     marginRight: 8,
   },
   typeIndicatorDot: {
@@ -412,24 +465,19 @@ const styles = StyleSheet.create({
   },
   submenuLabel: {
     fontSize: 13,
-    color: colors.textSecondary,
     fontWeight: '500',
   },
   submenuLabelActive: {
-    color: colors.primary,
     fontWeight: '700',
   },
   sectionDivider: {
     height: 1,
-    backgroundColor: colors.borderLight,
     marginVertical: 12,
     marginHorizontal: 8,
   },
   userFooter: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    backgroundColor: colors.surface,
   },
   userInfoRow: {
     flexDirection: 'row',
@@ -440,15 +488,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.primarySubtle,
     borderWidth: 1,
-    borderColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   userAvatarText: {
-    color: colors.primary,
     fontWeight: '700',
     fontSize: 14,
   },
@@ -458,7 +503,6 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -466,17 +510,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 8,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: colors.surfaceSecondary,
     borderWidth: 1,
-    borderColor: colors.border,
-  },
-  logoutIcon: {
-    fontSize: 13,
-    marginRight: 6,
   },
   logoutText: {
     fontSize: 13,
     fontWeight: '600',
-    color: colors.textSecondary,
   },
 });
