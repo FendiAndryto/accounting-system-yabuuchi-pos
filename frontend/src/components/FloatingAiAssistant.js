@@ -20,11 +20,13 @@ import { Badge } from './common/Badge';
 
 export function FloatingAiAssistant({ onDataChanged }) {
   const { colors } = useTheme();
-  const { language, t, formatCurrency } = useLanguage();
+  const { language, t, formatCurrency, getLocalizedName } = useLanguage();
   const { isMobile, height } = useResponsive();
   const [isOpen, setIsOpen] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [availableAccounts, setAvailableAccounts] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
@@ -35,6 +37,30 @@ export function FloatingAiAssistant({ onDataChanged }) {
   ]);
 
   const scrollViewRef = useRef(null);
+
+  // Load available bank accounts & categories for draft editing
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const [accRes, catRes] = await Promise.all([
+          accountingService.getAccounts(),
+          accountingService.getCategories(),
+        ]);
+        if (Array.isArray(accRes?.accounts)) {
+          setAvailableAccounts(accRes.accounts.filter((a) => a.is_active !== false && a.is_active !== 0));
+        }
+        if (Array.isArray(catRes?.categories)) {
+          setAvailableCategories(catRes.categories.filter((c) => c.is_active !== false && c.is_active !== 0));
+        }
+      } catch (err) {
+        console.warn('AI Assistant metadata fetch error:', err);
+      }
+    };
+
+    if (isOpen) {
+      fetchMetadata();
+    }
+  }, [isOpen]);
 
   // Sync welcome message if language changes and no real chat has started
   useEffect(() => {
@@ -126,15 +152,34 @@ export function FloatingAiAssistant({ onDataChanged }) {
     }
   };
 
+  const handleUpdateDraft = (msgId, updates) => {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id === msgId && msg.draftCard) {
+          return {
+            ...msg,
+            draftCard: {
+              ...msg.draftCard,
+              ...updates,
+            },
+          };
+        }
+        return msg;
+      })
+    );
+  };
+
   const handleConfirmDraft = async (draft, msgId) => {
     try {
       setIsTyping(true);
+      const fallbackAccId = availableAccounts[0]?.id || 1;
+      const fallbackCatId = availableCategories.find((c) => !c.type || c.type === draft.type)?.id || 1;
       const payload = {
         date: draft.date || new Date().toISOString().split('T')[0],
         type: draft.type,
         amount: parseFloat(draft.amount),
-        account_id: draft.account_id || 1,
-        category_id: draft.category_id || 1,
+        account_id: draft.account_id || fallbackAccId,
+        category_id: draft.category_id || fallbackCatId,
         payment_method: draft.payment_method || 'Transfer Bank',
         description: draft.description || 'Transaksi via AI Assistant',
       };
@@ -326,11 +371,123 @@ export function FloatingAiAssistant({ onDataChanged }) {
                         <Text style={[styles.draftDesc, { color: colors.textSecondary }]}>
                           {String(m.draftCard.description || '-')}
                         </Text>
-                        <Text style={[styles.draftMeta, { color: colors.textMuted }]}>
-                          {m.draftCard.account_name ? `${t('common.account')}: ${m.draftCard.account_name} • ` : ''}
-                          {m.draftCard.category_name ? `${t('common.category')}: ${m.draftCard.category_name} • ` : ''}
-                          {t('common.payment_method')}: {String(m.draftCard.payment_method || 'Transfer Bank')}
-                        </Text>
+                        {/* Interactive Bank and Category Selectors (when editable) */}
+                        {!m.draftSaved && !m.draftCancelled ? (
+                          <View style={styles.draftEditBox}>
+                            {/* Rekening / Bank Picker */}
+                            <View style={styles.draftEditGroup}>
+                              <Text style={[styles.draftEditLabel, { color: colors.textSecondary }]}>
+                                {t('common.account')}:
+                              </Text>
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.draftChipsScroll}>
+                                <View style={styles.draftChipsRow}>
+                                  {availableAccounts.map((acc) => {
+                                    const isSelected =
+                                      String(acc.id) === String(m.draftCard.account_id) ||
+                                      (!m.draftCard.account_id && acc.name === m.draftCard.account_name);
+                                    return (
+                                      <TouchableOpacity
+                                        key={acc.id}
+                                        style={[
+                                          styles.draftChip,
+                                          { backgroundColor: colors.surface, borderColor: colors.border },
+                                          isSelected && { backgroundColor: colors.primarySubtle, borderColor: colors.primary },
+                                        ]}
+                                        onPress={() =>
+                                          handleUpdateDraft(m.id, {
+                                            account_id: acc.id,
+                                            account_name: getLocalizedName(acc),
+                                          })
+                                        }
+                                        activeOpacity={0.7}
+                                      >
+                                        <Feather
+                                          name="credit-card"
+                                          size={10}
+                                          color={isSelected ? colors.primary : colors.textSecondary}
+                                          style={{ marginRight: 4 }}
+                                        />
+                                        <Text
+                                          style={[
+                                            styles.draftChipText,
+                                            { color: colors.textSecondary },
+                                            isSelected && { color: colors.primary, fontWeight: '700' },
+                                          ]}
+                                        >
+                                          {getLocalizedName(acc)}
+                                        </Text>
+                                      </TouchableOpacity>
+                                    );
+                                  })}
+                                </View>
+                              </ScrollView>
+                            </View>
+
+                            {/* Kategori Picker */}
+                            <View style={styles.draftEditGroup}>
+                              <Text style={[styles.draftEditLabel, { color: colors.textSecondary }]}>
+                                {t('common.category')}:
+                              </Text>
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.draftChipsScroll}>
+                                <View style={styles.draftChipsRow}>
+                                  {availableCategories
+                                    .filter((c) => !c.type || c.type === m.draftCard.type)
+                                    .map((cat) => {
+                                      const isSelected =
+                                        String(cat.id) === String(m.draftCard.category_id) ||
+                                        (!m.draftCard.category_id && cat.name === m.draftCard.category_name);
+                                      const isCashIn = m.draftCard.type === 'cash_in';
+                                      return (
+                                        <TouchableOpacity
+                                          key={cat.id}
+                                          style={[
+                                            styles.draftChip,
+                                            { backgroundColor: colors.surface, borderColor: colors.border },
+                                            isSelected && {
+                                              backgroundColor: isCashIn ? colors.cashInBg : colors.cashOutBg,
+                                              borderColor: isCashIn ? colors.cashIn : colors.cashOut,
+                                            },
+                                          ]}
+                                          onPress={() =>
+                                            handleUpdateDraft(m.id, {
+                                              category_id: cat.id,
+                                              category_name: getLocalizedName(cat),
+                                            })
+                                          }
+                                          activeOpacity={0.7}
+                                        >
+                                          <Feather
+                                            name="tag"
+                                            size={10}
+                                            color={isSelected ? (isCashIn ? colors.cashIn : colors.cashOut) : colors.textSecondary}
+                                            style={{ marginRight: 4 }}
+                                          />
+                                          <Text
+                                            style={[
+                                              styles.draftChipText,
+                                              { color: colors.textSecondary },
+                                              isSelected && {
+                                                color: isCashIn ? colors.cashIn : colors.cashOut,
+                                                fontWeight: '700',
+                                              },
+                                            ]}
+                                          >
+                                            {getLocalizedName(cat)}
+                                          </Text>
+                                        </TouchableOpacity>
+                                      );
+                                    })}
+                                </View>
+                              </ScrollView>
+                            </View>
+                          </View>
+                        ) : (
+                          <Text style={[styles.draftMeta, { color: colors.textMuted }]}>
+                            {m.draftCard.account_name ? `${t('common.account')}: ${m.draftCard.account_name} • ` : ''}
+                            {m.draftCard.category_name ? `${t('common.category')}: ${m.draftCard.category_name} • ` : ''}
+                            {t('common.payment_method')}: {String(m.draftCard.payment_method || 'Transfer Bank')}
+                          </Text>
+                        )}
 
                         {!m.draftSaved && !m.draftCancelled && (
                           <View style={styles.draftActions}>
@@ -663,6 +820,43 @@ const styles = StyleSheet.create({
   draftMeta: {
     fontSize: 11,
     marginTop: 2,
+  },
+  draftEditBox: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150, 150, 150, 0.2)',
+    gap: 6,
+  },
+  draftEditGroup: {
+    marginBottom: 4,
+  },
+  draftEditLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  draftChipsScroll: {
+    flexGrow: 0,
+  },
+  draftChipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingVertical: 2,
+  },
+  draftChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  draftChipText: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   draftActions: {
     flexDirection: 'row',
