@@ -13,10 +13,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootpassword}"]
-      interval: 5s
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
   backend:
     build:
@@ -26,6 +27,8 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
+    environment:
+      - DB_HOST=mysql
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
