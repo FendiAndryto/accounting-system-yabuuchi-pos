@@ -149,6 +149,7 @@ export function CashOutScreen({ onTransactionAdded }) {
           <Card
             title={t('screen.cash_out.title')}
             subtitle={t('screen.cash_out.subtitle')}
+            style={isMobile && { marginBottom: 0 }}
           >
             {errorMsg ? <Text style={[styles.alertError, { backgroundColor: colors.cashOutBg, color: colors.cashOut }]}>⚠ {errorMsg}</Text> : null}
             {successMsg ? <Text style={[styles.alertSuccess, { backgroundColor: colors.cashInBg, color: colors.cashIn }]}>{successMsg}</Text> : null}
@@ -170,8 +171,8 @@ export function CashOutScreen({ onTransactionAdded }) {
               required
               helperText={
                 language !== 'id' && amount && parseFloat(amount) > 0
-                  ? `${t('form.idr_equivalent')} Rp ${idrEquivalent.toLocaleString('id-ID')} • ${t('common.rate_info')}`
-                  : t('common.rate_info')
+                  ? `${t('form.idr_equivalent')} Rp ${idrEquivalent.toLocaleString('id-ID')}`
+                  : undefined
               }
             />
 
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     flexDirection: 'column',
-    gap: 16,
+    gap: 12,
   },
   formCol: {
     flex: 1.5,
@@ -382,6 +383,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   colMobile: {
+    flex: 0,
     minWidth: 0,
     width: '100%',
     maxWidth: '100%',

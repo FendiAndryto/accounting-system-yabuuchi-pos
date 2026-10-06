@@ -83,13 +83,47 @@ export function HistoryScreen() {
     >
       {/* Top Ledger Summary */}
       {summary && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ width: '100%', marginBottom: 20 }}
-          contentContainerStyle={{ flexGrow: 1, minWidth: '100%' }}
-        >
-          <View style={[styles.summaryRow, isMobile && styles.summaryRowMobile, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        isMobile ? (
+          <View style={[styles.summaryMobileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {/* Row 1: Total Transaksi & Arus Bersih */}
+            <View style={styles.summaryMobileRow}>
+              <View style={styles.summaryMobileCol}>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('common.all')}</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueMobile, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {summary.count || transactions.length}
+                </Text>
+              </View>
+              <View style={[styles.summaryMobileDividerV, { backgroundColor: colors.borderLight }]} />
+              <View style={styles.summaryMobileCol}>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.net_flow')}</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueMobile, { color: colors.primary }]} numberOfLines={1}>
+                  {formatCurrency(summary.net_flow || 0)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Horizontal divider between row 1 and row 2 */}
+            <View style={[styles.summaryMobileDividerH, { backgroundColor: colors.borderLight }]} />
+
+            {/* Row 2: Kas Masuk & Kas Keluar */}
+            <View style={styles.summaryMobileRow}>
+              <View style={styles.summaryMobileCol}>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_in')}</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueMobile, { color: colors.cashIn }]} numberOfLines={1}>
+                  {formatCurrency(summary.total_cash_in || 0)}
+                </Text>
+              </View>
+              <View style={[styles.summaryMobileDividerV, { backgroundColor: colors.borderLight }]} />
+              <View style={styles.summaryMobileCol}>
+                <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('dashboard.total_cash_out')}</Text>
+                <Text style={[styles.summaryValue, styles.summaryValueMobile, { color: colors.cashOut }]} numberOfLines={1}>
+                  {formatCurrency(summary.total_cash_out || 0)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View style={[styles.summaryRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>{t('common.all')}</Text>
               <Text style={[styles.summaryValue, { color: colors.textPrimary }]}>{summary.count || transactions.length}</Text>
@@ -116,7 +150,7 @@ export function HistoryScreen() {
               </Text>
             </View>
           </View>
-        </ScrollView>
+        )
       )}
 
       {/* Filter and Search Bar */}
@@ -287,7 +321,6 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     width: '100%',
-    minWidth: 640,
     flexDirection: 'row',
     borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
@@ -295,16 +328,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 20,
     ...theme.shadows.sm,
   },
-  summaryRowMobile: {
-    minWidth: 560,
+  summaryMobileCard: {
+    width: '100%',
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+    ...theme.shadows.sm,
+  },
+  summaryMobileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  summaryMobileCol: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+  },
+  summaryMobileDividerV: {
+    width: 1,
+    height: 32,
+  },
+  summaryMobileDividerH: {
+    height: 1,
+    width: '100%',
+    marginVertical: 8,
+  },
+  summaryValueMobile: {
+    fontSize: 14,
+    fontWeight: '800',
   },
   summaryItem: {
     flex: 1,
     paddingHorizontal: 12,
     alignItems: 'center',
-    minWidth: 130,
   },
   summaryDivider: {
     width: 1,

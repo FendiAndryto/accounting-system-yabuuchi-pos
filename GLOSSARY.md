@@ -43,3 +43,11 @@ _Avoid_: Adaptive layout, fixed-width, mobile-only.
 **AI Locale Prompt**:
 A fully translated Gemini system instruction (ID, EN, or JA) that sets the AI assistant's language, personality, and scope constraints. Selected by the frontend's active Language Locale and sent with each chat request.
 _Avoid_: Language hint, single-prompt-with-instruction, bilingual prompt.
+
+**Mobile Fullscreen Takeover**:
+An edge-to-edge modal overlay pattern on mobile viewports (≤768px) that claims 100% viewport width and height with zero margin, zero border radius, and fixed viewport positioning, eliminating background gaps and maximizing touch ergonomics.
+_Avoid_: Partial popup modal on mobile, floating dialog on phone screens, bottom gap takeover.
+
+**KPI Summary Grid**:
+The responsive arrangement of top financial metrics: 3-column inline cards on desktop, transitioning to a structured 2-row layout on mobile (paired 50/50 Cash In & Cash Out cards in row 1, 100% full-width Net Flow in row 2).
+_Avoid_: Unconstrained vertical stacking, horizontal carousel for critical KPIs.
