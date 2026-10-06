@@ -87,8 +87,8 @@ export const translations = {
 
     // Dashboard
     'dashboard.total_balance': 'Total Saldo Kas & Bank',
-    'dashboard.total_cash_in': 'Total Kas Masuk (Bulan Ini)',
-    'dashboard.total_cash_out': 'Total Kas Keluar (Bulan Ini)',
+    'dashboard.total_cash_in': 'Total Kas Masuk',
+    'dashboard.total_cash_out': 'Total Kas Keluar',
     'dashboard.net_flow': 'Arus Kas Bersih',
     'dashboard.active_accounts': 'Rekening Aktif',
     'dashboard.recent_transactions': 'Transaksi Kas Terkini',
@@ -238,8 +238,8 @@ export const translations = {
 
     // Dashboard
     'dashboard.total_balance': 'Total Cash & Bank Balance',
-    'dashboard.total_cash_in': 'Total Cash In (This Month)',
-    'dashboard.total_cash_out': 'Total Cash Out (This Month)',
+    'dashboard.total_cash_in': 'Total Cash In',
+    'dashboard.total_cash_out': 'Total Cash Out',
     'dashboard.net_flow': 'Net Cash Flow',
     'dashboard.active_accounts': 'Active Accounts',
     'dashboard.recent_transactions': 'Recent Cash Transactions',
@@ -389,8 +389,8 @@ export const translations = {
 
     // Dashboard
     'dashboard.total_balance': '現金・口座合計残高',
-    'dashboard.total_cash_in': '当月入金合計',
-    'dashboard.total_cash_out': '当月出金合計',
+    'dashboard.total_cash_in': '入金合計',
+    'dashboard.total_cash_out': '出金合計',
     'dashboard.net_flow': '純キャッシュフロー',
     'dashboard.active_accounts': '有効な口座',
     'dashboard.recent_transactions': '直近の入出金取引',
