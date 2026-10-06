@@ -145,11 +145,10 @@ export function CashOutScreen({ onTransactionAdded }) {
     >
       <View style={[styles.layoutRow, isMobile && styles.layoutRowMobile]}>
         {/* Form Column */}
-        <View style={[styles.formCol, isMobile && styles.colMobile]}>
+        <View style={isMobile ? styles.colMobile : styles.formCol}>
           <Card
             title={t('screen.cash_out.title')}
             subtitle={t('screen.cash_out.subtitle')}
-            style={isMobile && { marginBottom: 0 }}
           >
             {errorMsg ? <Text style={[styles.alertError, { backgroundColor: colors.cashOutBg, color: colors.cashOut }]}>⚠ {errorMsg}</Text> : null}
             {successMsg ? <Text style={[styles.alertSuccess, { backgroundColor: colors.cashInBg, color: colors.cashIn }]}>{successMsg}</Text> : null}
@@ -302,7 +301,7 @@ export function CashOutScreen({ onTransactionAdded }) {
         </View>
 
         {/* Recent Transactions Column */}
-        <View style={[styles.recentCol, isMobile && styles.colMobile]}>
+        <View style={isMobile ? styles.colMobile : styles.recentCol}>
           <Card
             title={t('nav.cash_out')}
             subtitle={t('dashboard.recent_transactions')}
@@ -368,7 +367,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: '100%',
     flexDirection: 'column',
-    gap: 12,
+    gap: 0,
   },
   formCol: {
     flex: 1.5,
@@ -383,10 +382,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   colMobile: {
-    flex: 0,
-    minWidth: 0,
     width: '100%',
     maxWidth: '100%',
+    minWidth: 0,
   },
   alertError: {
     padding: 12,

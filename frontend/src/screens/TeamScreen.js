@@ -23,7 +23,7 @@ import { FormInput } from '../components/common/FormInput';
 export function TeamScreen() {
   const { user: currentUser } = useAuth();
   const { colors } = useTheme();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const { isMobile } = useResponsive();
 
   const [loading, setLoading] = useState(true);
