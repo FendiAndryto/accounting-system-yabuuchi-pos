@@ -15,12 +15,12 @@ class GeminiAgentService
     public function __construct()
     {
         $this->apiKey = env('GEMINI_API_KEY');
-        $configured = env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
+        $configured = env('GEMINI_MODEL', 'gemini-2.5-flash');
         $this->candidateModels = array_values(array_unique(array_filter([
             $configured,
             'gemini-2.5-flash',
-            'gemini-3.5-flash-lite',
-            'gemini-3.8-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
         ])));
         $this->model = $this->candidateModels[0];
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -487,6 +487,39 @@ class GeminiAgentService
             ];
         }
 
+        // 9. Check for highest/largest transaction query
+        if (preg_match('/(transaksi|pengeluaran|pemasukan).*(tertinggi|terbesar|maksimal|paling tinggi|paling besar)/iu', $lower) ||
+            preg_match('/(tertinggi|terbesar|paling besar|paling tinggi).*(transaksi|pengeluaran|pemasukan)/iu', $lower)) {
+            $isIncome = preg_match('/(pemasukan|masuk|income)/iu', $lower);
+            $query = \App\Models\Transaction::with(['category', 'account'])->orderByDesc('amount');
+            if ($isIncome) {
+                $query->where('type', 'cash_in');
+            } elseif (preg_match('/(pengeluaran|keluar|expense)/iu', $lower)) {
+                $query->where('type', 'cash_out');
+            }
+            $highest = $query->first();
+            if ($highest) {
+                $tType = $highest->type === 'cash_in' ? 'Pemasukan' : 'Pengeluaran';
+                $tDate = $highest->date->format('d M Y');
+                $tAmount = 'Rp ' . number_format($highest->amount, 0, ',', '.');
+                $tCat = $highest->category?->name ?? 'Tanpa Kategori';
+                $tDesc = $highest->description ?: '-';
+                $reply = "Transaksi dengan nominal tertinggi di sistem:\n\n" .
+                    "📅 **Tanggal:** {$tDate}\n" .
+                    "💰 **Nominal:** **{$tAmount}** ({$tType})\n" .
+                    "🏷️ **Kategori:** {$tCat}\n" .
+                    "📝 **Keterangan:** {$tDesc}";
+            } else {
+                $reply = "Belum ada data transaksi yang tercatat di sistem saat ini.";
+            }
+            return [
+                'reply' => $reply,
+                'executed_tools' => [['name' => 'search_transaction', 'tool' => 'search_transaction', 'result' => $highest]],
+                'draft_card' => null,
+                'provider' => 'local-engine',
+            ];
+        }
+
         // Out-of-context refusal
         $refusal = match ($language) {
             'en' => "I apologize, but I am a dedicated Financial AI Assistant for the AUBE TERRA accounting system. I can only assist with recording cash in & cash out transactions, checking account balances, cash flow summaries, trend analyses, and company cash forecasts. Is there any financial data or report you would like to review?",
@@ -519,5 +552,31 @@ class GeminiAgentService
         ];
 
         return $contents;
+    }
+
+    /**
+     * Send generateContent request with multi-model failover
+     */
+    private function postGenerateContent(array $payload, int $timeout = 20): ?array
+    {
+        foreach ($this->candidateModels as $model) {
+            try {
+                $response = Http::timeout($timeout)->post(
+                    "{$this->baseUrl}/{$model}:generateContent?key={$this->apiKey}",
+                    $payload
+                );
+
+                if ($response->successful()) {
+                    $this->model = $model;
+                    return $response->json();
+                }
+
+                Log::warning("Gemini model {$model} failed with status {$response->status()}: " . $response->body());
+            } catch (\Throwable $e) {
+                Log::warning("Gemini model {$model} error: " . $e->getMessage());
+            }
+        }
+
+        return null;
     }
 }
