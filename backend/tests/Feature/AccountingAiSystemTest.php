@@ -203,4 +203,17 @@ class AccountingAiSystemTest extends TestCase
         $this->assertNotEmpty($response->json('reply'));
         $this->assertStringContainsString('pengeluaran', strtolower($response->json('reply')));
     }
+
+    public function test_ai_agent_chat_answers_total_transaction_question_without_refusal(): void
+    {
+        $payload = [
+            'message' => 'berapa total transaksi di bulan ini?',
+        ];
+
+        $response = $this->postJson('/api/v1/ai/chat', $payload);
+        $response->assertStatus(200);
+        $response->assertJsonPath('status', 'success');
+        $this->assertNotEmpty($response->json('reply'));
+        $this->assertStringNotContainsString('Maaf, saya adalah AI Asisten Keuangan khusus sistem akuntansi AUBE TERRA. Saya hanya dapat melayani', $response->json('reply'));
+    }
 }

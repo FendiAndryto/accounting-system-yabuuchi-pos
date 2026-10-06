@@ -15,12 +15,14 @@ class GeminiAgentService
     public function __construct()
     {
         $this->apiKey = env('GEMINI_API_KEY');
-        $configured = env('GEMINI_MODEL', 'gemini-2.5-flash');
+        $configured = env('GEMINI_MODEL', 'gemini-3.5-flash-lite');
         $this->candidateModels = array_values(array_unique(array_filter([
             $configured,
-            'gemini-2.5-flash',
-            'gemini-2.0-flash',
-            'gemini-1.5-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-3.5-flash',
+            'gemini-flash-lite-latest',
+            'gemini-flash-latest',
+            'gemini-3.8-flash',
         ])));
         $this->model = $this->candidateModels[0];
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -515,6 +517,43 @@ class GeminiAgentService
             return [
                 'reply' => $reply,
                 'executed_tools' => [['name' => 'search_transaction', 'tool' => 'search_transaction', 'result' => $highest]],
+                'draft_card' => null,
+                'provider' => 'local-engine',
+            ];
+        }
+
+        // 10. Check for general transaction / period transaction count & summary
+        if (preg_match('/(transaksi|transaction|riwayat|history|rekap|semua transaksi|total transaksi|daftar transaksi|取引)/iu', $lower)) {
+            $cf = AiToolRegistry::executeTool('cash_flow', []);
+            $txCount = \App\Models\Transaction::count();
+            $recentCount = \App\Models\Transaction::whereBetween('date', [
+                $cf['period']['start_date'],
+                $cf['period']['end_date']
+            ])->count();
+
+            if ($language === 'en') {
+                $msg = "📋 **Transaction Summary for This Period ({$cf['period']['start_date']} to {$cf['period']['end_date']}):**\n\n" .
+                    "• Total Transactions This Month: **{$recentCount} transactions** (Total system: {$txCount})\n" .
+                    "• Total Cash In: **{$cf['total_cash_in_formatted']}**\n" .
+                    "• Total Cash Out: **{$cf['total_cash_out_formatted']}**\n" .
+                    "• Net Cash Flow: **{$cf['net_cash_flow_formatted']}** ({$cf['status']})";
+            } elseif ($language === 'ja') {
+                $msg = "📋 **今期の取引概要 ({$cf['period']['start_date']} 〜 {$cf['period']['end_date']}):**\n\n" .
+                    "• 今月の取引件数: **{$recentCount} 件** (全期間合計: {$txCount} 件)\n" .
+                    "• 入金合計: **{$cf['total_cash_in_formatted']}**\n" .
+                    "• 出金合計: **{$cf['total_cash_out_formatted']}**\n" .
+                    "• 純キャッシュフロー: **{$cf['net_cash_flow_formatted']}** ({$cf['status']})";
+            } else {
+                $msg = "📋 **Ringkasan Transaksi Periode Ini ({$cf['period']['start_date']} s/d {$cf['period']['end_date']}):**\n\n" .
+                    "• Total Transaksi Bulan Ini: **{$recentCount} transaksi** (Total keseluruhan di sistem: {$txCount})\n" .
+                    "• Total Kas Masuk: **{$cf['total_cash_in_formatted']}**\n" .
+                    "• Total Kas Keluar: **{$cf['total_cash_out_formatted']}**\n" .
+                    "• Arus Kas Bersih (Net Cash Flow): **{$cf['net_cash_flow_formatted']}** ({$cf['status']})";
+            }
+
+            return [
+                'reply' => $msg,
+                'executed_tools' => [['name' => 'cash_flow', 'tool' => 'cash_flow', 'result' => $cf]],
                 'draft_card' => null,
                 'provider' => 'local-engine',
             ];
