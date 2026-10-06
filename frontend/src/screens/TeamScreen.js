@@ -177,19 +177,28 @@ export function TeamScreen() {
       showsVerticalScrollIndicator={false}
     >
       {/* Action and Filter Bar */}
-      <View style={styles.actionBar}>
-        <View style={styles.filterSection}>
-          <View style={styles.searchBox}>
-            <FormInput
-              placeholder={t('action.search')}
-              value={search}
-              onChangeText={setSearch}
-              style={{ marginBottom: 0 }}
+      {isMobile ? (
+        <View style={styles.actionBarMobile}>
+          {/* Row 1: Search + Add Button */}
+          <View style={styles.actionTopRowMobile}>
+            <View style={styles.searchBoxMobile}>
+              <FormInput
+                placeholder={t('action.search')}
+                value={search}
+                onChangeText={setSearch}
+                style={{ marginBottom: 0 }}
+              />
+            </View>
+            <Button
+              title={language === 'ja' ? '追加' : language === 'en' ? 'Add' : 'Tambah'}
+              onPress={handleOpenAdd}
+              icon={<Feather name="plus" size={15} color="#ffffff" />}
+              size="md"
             />
           </View>
 
-          {/* Role Filters */}
-          <View style={styles.chipsRow}>
+          {/* Row 2: Role Filters */}
+          <View style={styles.chipsRowMobile}>
             {[
               { id: 'all', label: t('common.all') },
               { id: 'admin', label: t('common.admin') },
@@ -217,14 +226,56 @@ export function TeamScreen() {
             ))}
           </View>
         </View>
+      ) : (
+        <View style={styles.actionBar}>
+          <View style={styles.filterSection}>
+            <View style={styles.searchBox}>
+              <FormInput
+                placeholder={t('action.search')}
+                value={search}
+                onChangeText={setSearch}
+                style={{ marginBottom: 0 }}
+              />
+            </View>
 
-        <Button
-          title={t('nav.team')}
-          onPress={handleOpenAdd}
-          icon={<Feather name="users" size={14} color="#ffffff" />}
-          size="md"
-        />
-      </View>
+            {/* Role Filters */}
+            <View style={styles.chipsRow}>
+              {[
+                { id: 'all', label: t('common.all') },
+                { id: 'admin', label: t('common.admin') },
+                { id: 'staff', label: t('common.staff') },
+              ].map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  style={[
+                    styles.filterChip,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                    roleFilter === c.id && { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight },
+                  ]}
+                  onPress={() => setRoleFilter(c.id)}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      { color: colors.textSecondary },
+                      roleFilter === c.id && { color: colors.primary, fontWeight: '700' },
+                    ]}
+                  >
+                    {c.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <Button
+            title={language === 'ja' ? 'ユーザー追加' : language === 'en' ? 'Add User' : 'Tambah Pengguna'}
+            onPress={handleOpenAdd}
+            icon={<Feather name="user-plus" size={14} color="#ffffff" />}
+            size="md"
+          />
+        </View>
+      )}
 
       {/* Users Table Card */}
       <Card
@@ -588,6 +639,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     gap: 16,
+    flexWrap: 'wrap',
+  },
+  actionBarMobile: {
+    marginBottom: 16,
+    gap: 10,
+    width: '100%',
+  },
+  actionTopRowMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+  },
+  searchBoxMobile: {
+    flex: 1,
+    minWidth: 0,
+  },
+  chipsRowMobile: {
+    flexDirection: 'row',
+    gap: 8,
     flexWrap: 'wrap',
   },
   filterSection: {

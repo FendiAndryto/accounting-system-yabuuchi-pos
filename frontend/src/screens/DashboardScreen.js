@@ -77,52 +77,97 @@ export function DashboardScreen({ onNavigate }) {
       contentContainerStyle={{ paddingBottom: 90 }}
       showsVerticalScrollIndicator={false}
     >
-      {/* KPI Cards Row */}
-      <View style={styles.kpiGrid}>
-        {/* Cash In Card */}
-        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
-          <View style={styles.kpiTopRow}>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_in')}</Text>
-            <View style={[styles.kpiIconBox, { backgroundColor: colors.cashInBg }]}>
-              <Feather name="arrow-down-left" size={14} color={colors.cashIn} />
+      {/* KPI Cards */}
+      {isMobile ? (
+        <View style={styles.kpiContainerMobile}>
+          {/* Row 1: Cash In & Cash Out in 1 row */}
+          <View style={styles.kpiPairRowMobile}>
+            {/* Cash In Card */}
+            <View style={[styles.kpiCard, styles.kpiCardHalfMobile, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
+              <View style={styles.kpiTopRow}>
+                <Text style={[styles.kpiLabel, styles.kpiLabelMobile, { color: colors.textSecondary }]} numberOfLines={1}>{t('dashboard.total_cash_in')}</Text>
+                <View style={[styles.kpiIconBox, styles.kpiIconBoxMobile, { backgroundColor: colors.cashInBg }]}>
+                  <Feather name="arrow-down-left" size={13} color={colors.cashIn} />
+                </View>
+              </View>
+              <Text style={[styles.kpiValue, styles.kpiValueMobile, { color: colors.cashIn }]} numberOfLines={1} adjustsFontSizeToFit>
+                {formatCurrency(totalIn)}
+              </Text>
+            </View>
+
+            {/* Cash Out Card */}
+            <View style={[styles.kpiCard, styles.kpiCardHalfMobile, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
+              <View style={styles.kpiTopRow}>
+                <Text style={[styles.kpiLabel, styles.kpiLabelMobile, { color: colors.textSecondary }]} numberOfLines={1}>{t('dashboard.total_cash_out')}</Text>
+                <View style={[styles.kpiIconBox, styles.kpiIconBoxMobile, { backgroundColor: colors.cashOutBg }]}>
+                  <Feather name="arrow-up-right" size={13} color={colors.cashOut} />
+                </View>
+              </View>
+              <Text style={[styles.kpiValue, styles.kpiValueMobile, { color: colors.cashOut }]} numberOfLines={1} adjustsFontSizeToFit>
+                {formatCurrency(totalOut)}
+              </Text>
             </View>
           </View>
-          <Text style={[styles.kpiValue, { color: colors.cashIn }]}>
-            {formatCurrency(totalIn)}
-          </Text>
-          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('common.rate_info')}</Text>
-        </View>
 
-        {/* Cash Out Card */}
-        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
-          <View style={styles.kpiTopRow}>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_out')}</Text>
-            <View style={[styles.kpiIconBox, { backgroundColor: colors.cashOutBg }]}>
-              <Feather name="arrow-up-right" size={14} color={colors.cashOut} />
+          {/* Row 2: Net Flow Card (Full Width) */}
+          <View style={[styles.kpiCard, styles.kpiCardFullMobile, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
+            <View style={styles.kpiTopRow}>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.net_flow')}</Text>
+              <Badge
+                label={netFlow >= 0 ? '+ Surplus' : '- Defisit'}
+                variant={netFlow >= 0 ? 'success' : 'danger'}
+                size="sm"
+              />
             </View>
+            <Text style={[styles.kpiValue, { color: colors.primary }]}>
+              {formatCurrency(netFlow)}
+            </Text>
           </View>
-          <Text style={[styles.kpiValue, { color: colors.cashOut }]}>
-            {formatCurrency(totalOut)}
-          </Text>
-          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('common.rate_info')}</Text>
         </View>
+      ) : (
+        <View style={styles.kpiGrid}>
+          {/* Cash In Card */}
+          <View style={[styles.kpiCard, styles.kpiCardIn, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashIn }]}>
+            <View style={styles.kpiTopRow}>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_in')}</Text>
+              <View style={[styles.kpiIconBox, { backgroundColor: colors.cashInBg }]}>
+                <Feather name="arrow-down-left" size={14} color={colors.cashIn} />
+              </View>
+            </View>
+            <Text style={[styles.kpiValue, { color: colors.cashIn }]}>
+              {formatCurrency(totalIn)}
+            </Text>
+          </View>
 
-        {/* Net Flow Card */}
-        <View style={[styles.kpiCard, isMobile && styles.kpiCardMobile, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
-          <View style={styles.kpiTopRow}>
-            <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.net_flow')}</Text>
-            <Badge
-              label={netFlow >= 0 ? '+ Surplus' : '- Defisit'}
-              variant={netFlow >= 0 ? 'success' : 'danger'}
-              size="sm"
-            />
+          {/* Cash Out Card */}
+          <View style={[styles.kpiCard, styles.kpiCardOut, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.cashOut }]}>
+            <View style={styles.kpiTopRow}>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.total_cash_out')}</Text>
+              <View style={[styles.kpiIconBox, { backgroundColor: colors.cashOutBg }]}>
+                <Feather name="arrow-up-right" size={14} color={colors.cashOut} />
+              </View>
+            </View>
+            <Text style={[styles.kpiValue, { color: colors.cashOut }]}>
+              {formatCurrency(totalOut)}
+            </Text>
           </View>
-          <Text style={[styles.kpiValue, { color: colors.primary }]}>
-            {formatCurrency(netFlow)}
-          </Text>
-          <Text style={[styles.kpiSub, { color: colors.textMuted }]}>{t('dashboard.net_flow')}</Text>
+
+          {/* Net Flow Card */}
+          <View style={[styles.kpiCard, styles.kpiCardNet, { backgroundColor: colors.surface, borderColor: colors.border, borderLeftColor: colors.primary }]}>
+            <View style={styles.kpiTopRow}>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]}>{t('dashboard.net_flow')}</Text>
+              <Badge
+                label={netFlow >= 0 ? '+ Surplus' : '- Defisit'}
+                variant={netFlow >= 0 ? 'success' : 'danger'}
+                size="sm"
+              />
+            </View>
+            <Text style={[styles.kpiValue, { color: colors.primary }]}>
+              {formatCurrency(netFlow)}
+            </Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Accounts & Cash Balance Overview */}
       <Card
@@ -282,6 +327,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     flexWrap: 'wrap',
   },
+  kpiContainerMobile: {
+    marginBottom: 16,
+    gap: 10,
+  },
+  kpiPairRowMobile: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
   kpiCard: {
     flex: 1,
     minWidth: 260,
@@ -290,9 +344,31 @@ const styles = StyleSheet.create({
     padding: 20,
     ...theme.shadows.sm,
   },
+  kpiCardHalfMobile: {
+    flex: 1,
+    minWidth: 0,
+    padding: 12,
+  },
+  kpiCardFullMobile: {
+    width: '100%',
+    minWidth: '100%',
+    padding: 14,
+  },
   kpiCardMobile: {
     minWidth: '100%',
     padding: 16,
+  },
+  kpiLabelMobile: {
+    fontSize: 11,
+  },
+  kpiIconBoxMobile: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  kpiValueMobile: {
+    fontSize: 17,
+    marginVertical: 2,
   },
   kpiCardIn: {
     borderLeftWidth: 4,

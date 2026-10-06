@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -207,7 +208,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
           ]}
         >
           {/* Header */}
-          <View style={[styles.popoverHeader, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
+          <View style={[styles.popoverHeader, isMobile && styles.popoverHeaderMobile, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
             <View style={styles.headerLeft}>
               <View style={[styles.sparkleBadge, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryLight }]}>
                 <Feather name="cpu" size={16} color={colors.primary} />
@@ -223,7 +224,7 @@ export function FloatingAiAssistant({ onDataChanged }) {
 
             <View style={styles.headerActions}>
               <TouchableOpacity
-                style={[styles.iconBtn, { backgroundColor: colors.surfaceSecondary }]}
+                style={[styles.iconBtn, isMobile && styles.iconBtnMobile, { backgroundColor: colors.surfaceSecondary }]}
                 onPress={handleResetChat}
                 title="Reset Chat"
                 activeOpacity={0.7}
@@ -231,12 +232,12 @@ export function FloatingAiAssistant({ onDataChanged }) {
                 <Feather name="rotate-ccw" size={13} color={colors.textSecondary} />
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.iconBtn, { backgroundColor: colors.surfaceSecondary }]}
+                style={[styles.iconBtn, isMobile && styles.iconBtnMobile, { backgroundColor: colors.surfaceSecondary }]}
                 onPress={() => setIsOpen(false)}
                 title="Tutup"
                 activeOpacity={0.7}
               >
-                <Feather name="x" size={15} color={colors.textSecondary} />
+                <Feather name="x" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -432,7 +433,7 @@ const styles = StyleSheet.create({
     right: 16,
   },
   floatingContainerMobileOpen: {
-    position: 'absolute',
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -483,12 +484,15 @@ const styles = StyleSheet.create({
   popoverCardMobile: {
     width: '100%',
     height: '100%',
+    maxHeight: '100%',
     maxWidth: '100%',
     borderRadius: 0,
     borderWidth: 0,
     marginBottom: 0,
+    margin: 0,
     display: 'flex',
     flexDirection: 'column',
+    flex: 1,
   },
   popoverHeader: {
     paddingHorizontal: 18,
@@ -497,6 +501,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  popoverHeaderMobile: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 14,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -540,6 +549,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconBtnMobile: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
   },
   quickPromptContainer: {
     paddingHorizontal: 14,
