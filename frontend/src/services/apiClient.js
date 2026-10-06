@@ -1,4 +1,14 @@
-const API_HOST = process.env.EXPO_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+const getApiHost = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location) {
+    return '';
+  }
+  return 'http://127.0.0.1:8000';
+};
+
+const API_HOST = getApiHost();
 export const API_AUTH = `${API_HOST}/api/auth`;
 export const API_BASE = `${API_HOST}/api/v1`;
 
